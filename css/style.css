@@ -597,3 +597,47 @@ main, .footer { overflow-x: clip; }
 .pd__thumbs::-webkit-scrollbar { display: none; }
 .pd__thumbs button { flex: none; opacity: .65; transition: opacity .2s, border-color .2s; }
 .pd__thumbs button.is-on, .pd__thumbs button:hover { opacity: 1; }
+
+/* ---------- Brand film (hero video) ---------- */
+.film {
+  position: relative; background: #000; overflow: hidden;
+  /* fit the screen; crop at most ~15% of the 16:9 frame rather than letterboxing */
+  height: clamp(47.8vw, calc(100svh - var(--header-h) - 34px), 56.25vw); min-height: 210px;
+}
+.film__video {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000;
+  transform: scale(1.08); opacity: 0; transition: transform 2s var(--ease), opacity 1.2s ease;
+}
+body.loaded .film__video { transform: none; opacity: 1; transition-delay: .35s; }
+.film__ui {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;
+  padding: 18px clamp(16px, 3vw, 32px) 22px;
+  opacity: 0; transform: translateY(14px); transition: opacity .8s, transform .9s var(--ease);
+}
+body.loaded .film__ui { opacity: 1; transform: none; transition-delay: 1.2s; }
+.film__label, .film__btn, .film__shop { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.film__label {
+  display: inline-flex; align-items: center; gap: 8px; margin: 0; padding: 8px 14px; border-radius: 20px;
+  background: rgba(0,0,0,.55); color: #fff; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+}
+.dot--light { background: #fff; } .dot--light::after { background: #fff; }
+.film__actions { display: flex; align-items: center; gap: 8px; }
+.film__btn {
+  width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; color: #fff;
+  background: rgba(0,0,0,.55); transition: background-color .2s, transform .3s var(--ease);
+}
+.film__btn:hover { background: rgba(0,0,0,.8); transform: scale(1.06); }
+.film__btn svg { width: 18px; height: 18px; }
+.film__btn .i-play, .film__btn .i-sound { display: none; }
+.film.is-paused .i-play, .film.has-sound .i-sound { display: block; }
+.film.is-paused .i-pause, .film.has-sound .i-muted { display: none; }
+.film__btn .i-play { fill: currentColor; }
+.film__progress { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(255,255,255,.12); z-index: 3; }
+.film__progress i { display: block; height: 100%; background: #fff; transform-origin: left; transform: scaleX(0); mix-blend-mode: difference; }
+@media (max-width: 640px) {
+  .film__ui { padding: 10px 10px 12px; }
+  .film__label { display: none; }
+  .film__ui { justify-content: flex-end; }
+  .film__shop { --h: 32px; padding: 0 12px; font-size: 12px; }
+  .film__btn { width: 32px; height: 32px; }
+}
