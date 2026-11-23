@@ -14,6 +14,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/icon-32.png" />
   <link rel="apple-touch-icon" href="assets/icons/icon-180.png" />
   <link rel="manifest" href="site.webmanifest" />
+  <link rel="preload" as="image" href="assets/video/lot704-poster.jpg" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -109,6 +110,31 @@
   </div>
 
   <main>
+    <!-- Brand film -->
+    <section class="film" id="film" aria-label="Taiga Takahashi Lot 704 brand film">
+      <video class="film__video" id="filmVideo" muted loop playsinline preload="metadata"
+        poster="assets/video/lot704-poster.jpg"
+        data-src-hd="assets/video/lot704-1080.mp4" data-src-sd="assets/video/lot704-720.mp4"
+        aria-label="Brand film for Taiga Takahashi Lot 704 Broken Indigo denim"></video>
+      <div class="film__ui">
+        <p class="film__label"><span class="dot dot--light"></span> Featured drop · Taiga Takahashi Lot 704</p>
+        <div class="film__actions">
+          <a class="btn btn--light btn--sm film__shop" id="filmShop" href="#shop" hidden>Shop Lot 704
+            <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <button class="film__btn" id="filmPlay" aria-label="Pause video">
+            <svg class="i-pause" viewBox="0 0 24 24"><path d="M9 6v12M15 6v12"/></svg>
+            <svg class="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg>
+          </button>
+          <button class="film__btn" id="filmSound" aria-label="Turn sound on" aria-pressed="false">
+            <svg class="i-muted" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+            <svg class="i-sound" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9a4.5 4.5 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="film__progress" aria-hidden="true"><i id="filmBar"></i></div>
+    </section>
+
     <!-- Hero -->
     <section class="hero container">
       <div class="hero__copy">

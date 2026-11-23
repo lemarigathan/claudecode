@@ -46,5 +46,15 @@ Notes:
 - Anyone can see the published sheet, so keep private info (buyer details, costs) in a **separate tab** and only publish the product tab.
 - If the sheet can't be reached, the site shows the last copy of the sheet saved in that browser, or the `PRODUCTS` list in `js/products.js` if there's no copy.
 
+## Hero video
+The brand film at the top of the page lives in `assets/video/`. Desktop gets `lot704-1080.mp4`, phones and data-saver users get `lot704-720.mp4`, and `lot704-poster.jpg` shows while it loads. It plays muted and on a loop, pauses when scrolled off screen, and doesn't autoplay for visitors who've turned on reduced motion. The **Shop Lot 704** button links to the inventory item whose name contains "Lot 704", and is hidden if that item is missing or sold.
+
+To swap in a new film, re-encode it like this and replace the three files (keep the names, or update them in `index.html`):
+```bash
+ffmpeg -i film.mp4 -c:v libx264 -preset slow -crf 24 -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 128k assets/video/lot704-1080.mp4
+ffmpeg -i film.mp4 -vf scale=1280:-2 -c:v libx264 -preset slow -crf 25 -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 96k assets/video/lot704-720.mp4
+ffmpeg -ss 20 -i film.mp4 -frames:v 1 -vf scale=1600:-2 -q:v 4 assets/video/lot704-poster.jpg
+```
+
 ## Deploy
 Push to GitHub and turn on **GitHub Pages** (Settings → Pages → deploy from this branch, root folder). Netlify or Vercel also work if you drag and drop the folder.

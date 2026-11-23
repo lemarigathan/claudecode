@@ -714,6 +714,56 @@
     toast("You're on the list — see you Friday!");
   });
 
+  /* ---------- brand film (hero video) ---------- */
+  function setupFilm() {
+    const sec = $("#film"), v = $("#filmVideo");
+    if (!sec || !v) return;
+    const conn = navigator.connection || {};
+    const small = matchMedia("(max-width: 820px)").matches || conn.saveData || /2g/.test(conn.effectiveType || "");
+    v.src = small ? v.dataset.srcSd : v.dataset.srcHd;
+
+    // "Shop Lot 704" opens the product if it's in the inventory
+    const lot = P.find((p) => /lot\s*704/i.test(p.title) && !p.sold);
+    if (lot) { const a = $("#filmShop"); a.href = `#item-${lot.id}`; a.hidden = false; }
+
+    let userPaused = reduce; // respect reduced motion: don't autoplay
+    const sync = () => {
+      sec.classList.toggle("is-paused", v.paused);
+      sec.classList.toggle("has-sound", !v.muted);
+      $("#filmPlay").setAttribute("aria-label", v.paused ? "Play video" : "Pause video");
+      $("#filmSound").setAttribute("aria-label", v.muted ? "Turn sound on" : "Turn sound off");
+      $("#filmSound").setAttribute("aria-pressed", String(!v.muted));
+    };
+    const play = () => v.play().catch(() => { sec.classList.add("is-paused"); });
+    ["play", "pause", "volumechange"].forEach((ev) => v.addEventListener(ev, sync));
+    $("#filmPlay").addEventListener("click", () => {
+      if (v.paused) { userPaused = false; play(); } else { userPaused = true; v.pause(); }
+    });
+    $("#filmSound").addEventListener("click", () => {
+      v.muted = !v.muted;
+      if (!v.muted && v.paused) { userPaused = false; play(); }
+    });
+    v.addEventListener("click", () => $("#filmPlay").click());
+
+    // progress line
+    const bar = $("#filmBar");
+    const tick = () => {
+      if (v.duration) bar.style.transform = `scaleX(${v.currentTime / v.duration})`;
+      if (!v.paused) requestAnimationFrame(tick);
+    };
+    v.addEventListener("play", () => requestAnimationFrame(tick));
+
+    // only play while on screen (saves battery); never fight a manual pause
+    new IntersectionObserver(([en]) => {
+      if (en.isIntersecting && !userPaused) play();
+      else if (!en.isIntersecting && !v.paused) v.pause();
+    }, { threshold: 0.25 }).observe(sec);
+    // stop the sound when a product is opened
+    new MutationObserver(() => { if (modal.classList.contains("is-open") && !v.muted) v.muted = true; })
+      .observe(modal, { attributes: true, attributeFilter: ["class"] });
+    sync();
+  }
+
   /* ---------- boot ---------- */
   $$(".loader__word span").forEach((s, i) => s.style.setProperty("--i", i));
   Object.assign($("#fPrice"), { max: PRICE_MAX, value: PRICE_MAX, step: PRICE_MAX > 5e6 ? 100000 : 50000 });
@@ -722,6 +772,7 @@
   updateBadges();
   observeReveals();
   bindMagnetic();
+  setupFilm();
 
   const finishLoad = () => {
     document.body.classList.add("loaded");
