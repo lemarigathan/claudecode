@@ -137,7 +137,44 @@
     return `https://docs.google.com/spreadsheets/d/${m[1]}/gviz/tq?tqx=out:csv&headers=1${gid ? "&gid=" + gid : ""}`;
   }
 
-  async function fetchSheet(url) {
+  /* JSONP via Google's gviz endpoint. Loaded as a <script>, so it isn't
+     subject to cross-origin (CORS) restrictions the way fetch() is. */
+  function sheetJSONP(url) {
+    const id = (url.match(/docs\.google\.com\/spreadsheets\/d\/([\w-]{20,})/) || [])[1];
+    if (!id || /\/d\/e\//.test(url)) return Promise.reject(new Error("Not a regular sheet link"));
+    const gid = (url.match(/[#&?]gid=(\d+)/) || [])[1];
+    return new Promise((resolve, reject) => {
+      const cb = "__lgSheet" + Date.now();
+      const s = document.createElement("script");
+      const done = (fn, arg) => { clearTimeout(t); delete window[cb]; s.remove(); fn(arg); };
+      const t = setTimeout(() => done(reject, new Error("Timed out loading the sheet")), TIMEOUT);
+      window[cb] = (resp) => {
+        if (!resp || resp.status === "error") {
+          const e = resp && resp.errors && resp.errors[0];
+          return done(reject, new Error(e ? e.detailed_message || e.message : "Sheet returned an error"));
+        }
+        try { done(resolve, gvizRows(resp.table)); } catch (err) { done(reject, err); }
+      };
+      s.onerror = () => done(reject, new Error("Could not load the sheet (is it shared as 'Anyone with the link'?)"));
+      s.src = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json;responseHandler:${cb}&headers=1${gid ? "&gid=" + gid : ""}&_=${Date.now()}`;
+      document.head.appendChild(s);
+    });
+  }
+  function gvizCell(c) {
+    if (!c) return "";
+    if (c.f != null) return String(c.f);
+    if (c.v == null) return "";
+    const m = typeof c.v === "string" && c.v.match(/^Date\((\d+),(\d+),(\d+)/);
+    return m ? `${m[1]}-${pad(+m[2] + 1)}-${pad(m[3])}` : String(c.v);
+  }
+  function gvizRows(table) {
+    const head = table.cols.map((c) => (c.label || "").trim());
+    const body = table.rows.map((r) => (r.c || []).map(gvizCell));
+    // If Google didn't detect the header row, the first data row is the header
+    return head.some((h) => /^title$/i.test(h)) ? [head, ...body] : body;
+  }
+
+  async function fetchCSV(url) {
     url = csvURL(url);
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), TIMEOUT);
@@ -146,9 +183,18 @@
       const res = await fetch(url + sep + "_=" + Date.now(), { signal: ctrl.signal, cache: "no-store" });
       if (!res.ok) throw new Error("HTTP " + res.status);
       const text = await res.text();
-      if (/^\s*</.test(text)) throw new Error("Got a web page instead of CSV — publish the sheet as CSV");
-      return toProducts(parseCSV(text));
+      if (/^\s*</.test(text)) throw new Error("Got a web page instead of CSV (is the sheet shared publicly?)");
+      return parseCSV(text);
     } finally { clearTimeout(t); }
+  }
+
+  async function fetchSheet(url) {
+    const errors = [];
+    for (const method of [sheetJSONP, fetchCSV]) {
+      try { return toProducts(await method(url)); }
+      catch (err) { errors.push(`${method.name}: ${err.message}`); }
+    }
+    throw new Error(errors.join(" | "));
   }
 
   window.loadProducts = async function () {
@@ -169,5 +215,5 @@
   };
 
   // exposed for testing
-  window.__sheet = { parseCSV, toProducts, csvURL, date };
+  window.__sheet = { parseCSV, toProducts, csvURL, date, gvizRows };
 })();

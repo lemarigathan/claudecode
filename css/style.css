@@ -568,3 +568,7 @@ main, .footer { overflow-x: clip; }
 .steps li.reveal { transition: opacity .9s var(--ease), transform 1s var(--ease), background-color .3s; }
 .empty[hidden] { display: none; }
 .acc__body { white-space: pre-line; }
+.data-source { white-space: nowrap; }
+.data-source::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin: 0 4px 1px 2px; background: #bbb; }
+.data-source[data-src="sheet"]::before { background: var(--ok); }
+.data-source[data-src="cache"]::before { background: #e0a100; }
