@@ -1,37 +1,36 @@
-name: Deploy to GitHub Pages
+name: Publish site to gh-pages
 
+# GitHub Pages serves the site from the gh-pages branch.
+# Every push here copies the site files into that branch.
 on:
   push:
     branches: ["claude/wonderful-franklin-0xqmq8", "main"]
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  publish:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - name: Prepare site
+      - name: Copy site into gh-pages
         run: |
-          mkdir _site
-          cp -r index.html favicon.ico site.webmanifest css js assets _site/
-          touch _site/.nojekyll
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          mkdir /tmp/site
+          cp -r index.html favicon.ico site.webmanifest css js assets /tmp/site/
+          touch /tmp/site/.nojekyll
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages
+          git checkout -B gh-pages origin/gh-pages
+          git rm -rq --ignore-unmatch .
+          cp -r /tmp/site/. .
+          git add -A
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "Publish ${GITHUB_SHA::7}"
+          git push origin gh-pages
