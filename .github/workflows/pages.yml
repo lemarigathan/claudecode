@@ -24,6 +24,8 @@ jobs:
           mkdir /tmp/site
           cp -r index.html favicon.ico site.webmanifest css js assets /tmp/site/
           touch /tmp/site/.nojekyll
+          # cache-bust: make browsers load the new CSS/JS after each deploy
+          sed -i "s/?v=dev/?v=${GITHUB_SHA::7}/g" /tmp/site/index.html
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin gh-pages

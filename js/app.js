@@ -654,6 +654,9 @@
   $("#footMail").href = `mailto:${S.email}`;
   $("#footCity").textContent = S.city;
   $("#year").textContent = new Date().getFullYear();
+  const srcText = { sheet: "Inventory synced from Google Sheets", cache: "Showing last synced inventory (sheet unreachable)", file: "Showing built-in inventory" };
+  $("#dataSource").textContent = "· " + srcText[DATA_SOURCE];
+  $("#dataSource").dataset.src = DATA_SOURCE;
   const liveN = P.filter((p) => !p.sold).length;
   $("#liveCount").textContent = `${liveN} pieces available`;
 
