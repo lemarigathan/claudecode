@@ -567,3 +567,4 @@ main, .footer { overflow-x: clip; }
 }
 .steps li.reveal { transition: opacity .9s var(--ease), transform 1s var(--ease), background-color .3s; }
 .empty[hidden] { display: none; }
+.acc__body { white-space: pre-line; }
