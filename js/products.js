@@ -29,7 +29,7 @@ window.STORE = {
   // or a "Publish to web" CSV link.
   // Leave empty ("") to use the PRODUCTS list below instead.
   // Example: "https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?gid=0&single=true&output=csv"
-  sheetCSV: "https://docs.google.com/spreadsheets/d/19tK7LdlYWz5pOEZannuICG4a7c071jyv4lVoDvCfJ3A/edit",
+  sheetCSV: "https://docs.google.com/spreadsheets/d/1GXny7zgGm9oLVuILYvAQRi-jddSAiuejP9tHLO6GhNE/edit",
 };
 
 window.PRODUCTS = [

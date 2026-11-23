@@ -572,3 +572,28 @@ main, .footer { overflow-x: clip; }
 .data-source::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin: 0 4px 1px 2px; background: #bbb; }
 .data-source[data-src="sheet"]::before { background: var(--ok); }
 .data-source[data-src="cache"]::before { background: #e0a100; }
+
+/* ---------- Product photos ---------- */
+.card__media > img.alt { opacity: 0; transition: opacity .5s var(--ease), transform .9s var(--ease); }
+@media (hover: hover) { .card:hover .card__media.has-alt > img.alt { opacity: 1; } }
+.card__count { position: absolute; left: 10px; bottom: 10px; z-index: 2; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 10px; background: rgba(0,0,0,.6); color: #fff; transition: opacity .3s; }
+@media (hover: hover) { .card:hover .card__count { opacity: 0; } }
+.card__media > img { background: var(--bg-soft); }
+
+.pd__frame { position: absolute; inset: 0; }
+.pd__frame.slide-in > * { animation: photoIn .45s var(--ease); }
+@keyframes photoIn { from { opacity: 0; transform: translateX(calc(var(--dir, 1) * 28px)); } }
+.pd__nav {
+  position: absolute; top: 50%; z-index: 2; width: 42px; height: 42px; margin-top: -21px; border-radius: 50%;
+  display: grid; place-items: center; background: rgba(255,255,255,.92); box-shadow: 0 6px 18px -8px rgba(0,0,0,.35);
+  opacity: 0; transition: opacity .3s, transform .3s var(--ease);
+}
+.pd__nav--prev { left: 12px; } .pd__nav--next { right: 12px; }
+.pd__main:hover .pd__nav, .pd__nav:focus-visible { opacity: 1; }
+.pd__nav:hover { transform: scale(1.08); }
+@media (hover: none) { .pd__nav { opacity: 1; width: 36px; height: 36px; margin-top: -18px; } }
+.pd__counter { position: absolute; right: 12px; bottom: 12px; z-index: 2; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px; background: rgba(0,0,0,.6); color: #fff; }
+.pd__thumbs { overflow-x: auto; scrollbar-width: none; }
+.pd__thumbs::-webkit-scrollbar { display: none; }
+.pd__thumbs button { flex: none; opacity: .65; transition: opacity .2s, border-color .2s; }
+.pd__thumbs button.is-on, .pd__thumbs button:hover { opacity: 1; }
