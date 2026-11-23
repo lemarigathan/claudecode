@@ -19,8 +19,10 @@ Everything lives in `js/products.js`:
 Manage the shop from a spreadsheet. Edit a row and the site updates on the next page load, with no code or redeploy.
 
 1. **Create the sheet.** Go to [sheets.new](https://sheets.new), then **File → Import → Upload** and choose `sheet-template.csv` from this repo ("Replace current sheet"). You'll start with all the sample products in the right columns.
-2. **Publish it.** **File → Share → Publish to web**, pick the product sheet tab and **Comma-separated values (.csv)**, then click **Publish** and copy the link.
+2. **Share it.** Click **Share → General access → Anyone with the link → Viewer** and copy the link. (A **File → Share → Publish to web → CSV** link also works.)
 3. **Connect it.** Paste the link into `sheetCSV` in `js/products.js`, then commit and push.
+
+> **Number-only sizes:** Google's feed can drop numbers in a column that is mostly text. Write sizes as text, e.g. `W32` or `EU 42.5`, not `32`. If you need plain numbers, use a Publish to web link instead.
 
 | Column | What to put |
 |---|---|
