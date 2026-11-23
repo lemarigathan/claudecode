@@ -7,6 +7,8 @@
   const S = window.STORE;
   const { products: P, source: DATA_SOURCE } = await window.loadProducts();
   document.documentElement.dataset.source = DATA_SOURCE;
+  // Price slider ceiling follows the most expensive item (rounded up to the next Rp500k)
+  const PRICE_MAX = Math.max(500000, Math.ceil(Math.max(0, ...P.map((p) => p.price)) / 500000) * 500000);
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -105,10 +107,19 @@
     }
     return `<svg viewBox="0 0 200 240" aria-hidden="true">${g}</svg>`;
   }
-  const media = (p, i = 0) =>
+  const media = (p, i = 0, cls = "") =>
     p.images && p.images[i]
-      ? `<img src="${esc(p.images[i])}" alt="${esc(p.brand + " " + p.title)}" loading="lazy" />`
-      : `<div class="art">${art(p.type, p.color)}</div>`;
+      ? `<img src="${esc(p.images[i])}" alt="${esc(p.brand + " " + p.title)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-pid="${p.id}"${cls ? ` class="${cls}"` : ""} onerror="__lgImgFail(this)" />`
+      : cls ? "" : `<div class="art">${art(p.type, p.color)}</div>`;
+  // A photo link that doesn't load (deleted, private, typo) falls back to the drawing
+  window.__lgImgFail = (img) => {
+    const p = byId(img.dataset.pid);
+    if (!p || img.classList.contains("alt")) { img.style.display = "none"; return; }
+    const d = document.createElement("div");
+    d.className = "art";
+    d.innerHTML = art(p.type, p.color);
+    img.replaceWith(d);
+  };
 
   /* ---------- state ---------- */
   const state = {
@@ -116,7 +127,7 @@
     cats: new Set(),
     sizes: new Set(),
     conds: new Set(),
-    maxPrice: 2500000,
+    maxPrice: PRICE_MAX,
     savedOnly: false,
     q: "",
     sort: "new",
@@ -133,7 +144,7 @@
       if (state.cats.size && !state.cats.has(p.category)) return false;
       if (state.sizes.size && !state.sizes.has(p.size)) return false;
       if (state.conds.size && !state.conds.has(p.condition)) return false;
-      if (p.price > state.maxPrice) return false;
+      if (state.maxPrice < PRICE_MAX && p.price > state.maxPrice) return false;
       if (state.savedOnly && !saved.has(p.id)) return false;
       if (q) {
         const hay = `${p.brand} ${p.title} ${p.category} ${p.size} ${p.type}`.toLowerCase();
@@ -158,8 +169,10 @@
     const tag = p.sold ? "" : p.oldPrice ? `<span class="tag tag--drop">−${Math.round((1 - p.price / p.oldPrice) * 100)}%</span>` : isNew ? `<span class="tag tag--new">New</span>` : "";
     return `
       <article class="card${p.sold ? " is-sold" : ""}" style="--i:${i}" data-id="${p.id}" tabindex="0" aria-label="${esc(p.brand + " " + p.title)}">
-        <div class="card__media">
+        <div class="card__media${p.images && p.images[1] ? " has-alt" : ""}">
           ${media(p)}
+          ${p.images && p.images[1] ? media(p, 1, "alt") : ""}
+          ${p.images && p.images.length > 1 ? `<span class="card__count">${p.images.length} foto</span>` : ""}
           ${tag}
           <button class="heart${saved.has(p.id) ? " is-on" : ""}" data-save="${p.id}" aria-label="Save item" aria-pressed="${saved.has(p.id)}">${heartSVG}${burst}</button>
           ${p.sold ? "" : `<button class="card__quick" data-open="${p.id}">Quick view</button>`}
@@ -194,7 +207,7 @@
     state.cats.forEach((c) => chips.push([`cat:${c}`, CATS[c].label]));
     state.sizes.forEach((s) => chips.push([`size:${s}`, `Size ${s}`]));
     state.conds.forEach((c) => chips.push([`cond:${c}`, `${c}/10`]));
-    if (state.maxPrice < 2500000) chips.push(["price", `Under ${short(state.maxPrice)}`]);
+    if (state.maxPrice < PRICE_MAX) chips.push(["price", `Under ${short(state.maxPrice)}`]);
     if (state.savedOnly) chips.push(["saved", "Saved"]);
     if (state.q) chips.push(["q", `“${state.q}”`]);
     $("#activeChips").innerHTML = chips.map(([k, l]) => `<button class="chip" data-chip="${esc(k)}">${esc(l)}</button>`).join("");
@@ -224,7 +237,7 @@
     $$('[data-f="cond"]').forEach((i) => (i.checked = state.conds.has(+i.value)));
     $$("[data-size]").forEach((b) => b.classList.toggle("is-on", state.sizes.has(b.dataset.size)));
     $("#fPrice").value = state.maxPrice;
-    $("#fPriceLabel").textContent = state.maxPrice >= 2500000 ? "Any" : rupiah(state.maxPrice);
+    $("#fPriceLabel").textContent = state.maxPrice >= PRICE_MAX ? "Any" : rupiah(state.maxPrice);
     $("#fSaved").checked = state.savedOnly;
     // category nav
     let navKey = state.mode !== "all" ? state.mode : state.cats.size === 1 ? [...state.cats][0] : state.cats.size === 0 ? "all" : null;
@@ -249,12 +262,12 @@
   let priceT;
   $("#fPrice").addEventListener("input", (e) => {
     state.maxPrice = +e.target.value;
-    $("#fPriceLabel").textContent = state.maxPrice >= 2500000 ? "Any" : rupiah(state.maxPrice);
+    $("#fPriceLabel").textContent = state.maxPrice >= PRICE_MAX ? "Any" : rupiah(state.maxPrice);
     clearTimeout(priceT);
     priceT = setTimeout(render, 180);
   });
   function clearAll() {
-    Object.assign(state, { mode: "all", maxPrice: 2500000, savedOnly: false, q: "" });
+    Object.assign(state, { mode: "all", maxPrice: PRICE_MAX, savedOnly: false, q: "" });
     state.cats.clear(); state.sizes.clear(); state.conds.clear();
     $("#searchInput").value = "";
     render();
@@ -268,7 +281,7 @@
     if (k === "cat") state.cats.delete(v);
     if (k === "size") state.sizes.delete(v);
     if (k === "cond") state.conds.delete(+v);
-    if (k === "price") state.maxPrice = 2500000;
+    if (k === "price") state.maxPrice = PRICE_MAX;
     if (k === "saved") state.savedOnly = false;
     if (k === "q") { state.q = ""; $("#searchInput").value = ""; }
     render();
@@ -458,6 +471,20 @@
   /* ---------- product modal ---------- */
   const modal = $("#modal");
   let lastFocus = null;
+  let gal = { p: null, i: 0, n: 1 };
+  function showPhoto(i) {
+    if (!gal.p || gal.n < 2) return;
+    const dir = i > gal.i ? 1 : -1;
+    gal.i = (i + gal.n) % gal.n;
+    const frame = $("#pdFrame");
+    $("#pdMain").classList.remove("zoom");
+    frame.style.setProperty("--dir", dir);
+    frame.classList.remove("slide-in"); void frame.offsetWidth;
+    frame.innerHTML = media(gal.p, gal.i);
+    frame.classList.add("slide-in");
+    $$("[data-thumb]").forEach((b) => b.classList.toggle("is-on", +b.dataset.thumb === gal.i));
+    $("#pdCounter").textContent = `${gal.i + 1} / ${gal.n}`;
+  }
   function openModal(id, push = true) {
     const p = byId(id);
     if (!p) return;
@@ -465,11 +492,18 @@
     const imgs = p.images && p.images.length ? p.images : [null];
     const similar = P.filter((x) => x.id !== p.id && !x.sold && (x.category === p.category || x.brand === p.brand)).slice(0, 4);
     const drop = p.oldPrice && !p.sold;
+    gal = { p, i: 0, n: imgs.length };
     $("#modalBody").innerHTML = `
       <div class="pd">
         <div class="pd__gallery">
-          <div class="pd__main" id="pdMain">${media(p, 0)}</div>
-          ${imgs.length > 1 ? `<div class="pd__thumbs">${imgs.map((src, i) => `<button class="${i ? "" : "is-on"}" data-thumb="${i}"><img src="${esc(src)}" alt="" /></button>`).join("")}</div>` : ""}
+          <div class="pd__main" id="pdMain">
+            <div class="pd__frame" id="pdFrame">${media(p, 0)}</div>
+            ${imgs.length > 1 ? `
+              <button class="pd__nav pd__nav--prev" data-gal="-1" aria-label="Previous photo"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+              <button class="pd__nav pd__nav--next" data-gal="1" aria-label="Next photo"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+              <span class="pd__counter" id="pdCounter">1 / ${imgs.length}</span>` : ""}
+          </div>
+          ${imgs.length > 1 ? `<div class="pd__thumbs">${imgs.map((src, i) => `<button class="${i ? "" : "is-on"}" data-thumb="${i}" aria-label="Photo ${i + 1}"><img src="${esc(src)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.style.display='none'" /></button>`).join("")}</div>` : ""}
         </div>
         <div class="pd__info">
           <div>
@@ -522,25 +556,36 @@
     const t = e.target;
     if (t.closest("[data-close]")) return closeModal();
     const th = t.closest("[data-thumb]");
-    if (th) {
-      const p = byId(location.hash.replace("#item-", ""));
-      $$("[data-thumb]").forEach((b) => b.classList.toggle("is-on", b === th));
-      const main = $("#pdMain");
-      main.style.opacity = 0;
-      setTimeout(() => { main.innerHTML = media(p, +th.dataset.thumb); main.style.opacity = 1; }, 150);
-      return;
-    }
+    if (th) return showPhoto(+th.dataset.thumb);
+    const nav = t.closest("[data-gal]");
+    if (nav) return showPhoto(gal.i + +nav.dataset.gal);
     const main = t.closest("#pdMain");
-    if (main) {
+    if (main && !swiped) {
       main.classList.toggle("zoom");
       return;
     }
+  });
+  // swipe between photos on touch screens
+  let sx = 0, sy = 0, swiped = false;
+  modal.addEventListener("touchstart", (e) => {
+    if (!e.target.closest("#pdMain")) return;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; swiped = false;
+  }, { passive: true });
+  modal.addEventListener("touchend", (e) => {
+    if (!e.target.closest("#pdMain")) return;
+    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { swiped = true; showPhoto(gal.i + (dx < 0 ? 1 : -1)); setTimeout(() => (swiped = false), 350); }
+  }, { passive: true });
+  document.addEventListener("keydown", (e) => {
+    if (!modal.classList.contains("is-open")) return;
+    if (e.key === "ArrowRight") showPhoto(gal.i + 1);
+    if (e.key === "ArrowLeft") showPhoto(gal.i - 1);
   });
   modal.addEventListener("mousemove", (e) => {
     const main = e.target.closest("#pdMain.zoom");
     if (!main) return;
     const r = main.getBoundingClientRect();
-    const el = main.firstElementChild;
+    const el = main.querySelector("#pdFrame > *");
     el.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`;
   });
   window.addEventListener("popstate", routeFromHash);
@@ -671,6 +716,7 @@
 
   /* ---------- boot ---------- */
   $$(".loader__word span").forEach((s, i) => s.style.setProperty("--i", i));
+  Object.assign($("#fPrice"), { max: PRICE_MAX, value: PRICE_MAX, step: PRICE_MAX > 5e6 ? 100000 : 50000 });
   buildFilters();
   render();
   updateBadges();

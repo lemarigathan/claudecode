@@ -18,27 +18,28 @@ Everything lives in `js/products.js`:
 ## Use Google Sheets as the backend (recommended)
 Manage the shop from a spreadsheet. Edit a row and the site updates on the next page load, with no code or redeploy.
 
-1. **Create the sheet.** Go to [sheets.new](https://sheets.new), then **File → Import → Upload** and choose `sheet-template.csv` from this repo ("Replace current sheet"). You'll start with all the sample products in the right columns.
+1. **Create the sheet.** Go to [sheets.new](https://sheets.new), then **File → Import → Upload** and choose `sheet-template.csv` from this repo ("Replace current sheet"). You'll start with the right columns.
 2. **Share it.** Click **Share → General access → Anyone with the link → Viewer** and copy the link. (A **File → Share → Publish to web → CSV** link also works.)
 3. **Connect it.** Paste the link into `sheetCSV` in `js/products.js`, then commit and push.
 
-> **Number-only sizes:** Google's feed can drop numbers in a column that is mostly text. Write sizes as text, e.g. `W32` or `EU 42.5`, not `32`. If you need plain numbers, use a Publish to web link instead.
+> **Number-only sizes:** Google's feed can drop numbers in a column that is mostly text. In the live sheet the Ukuran column is formatted as plain text, so this is handled. In a new sheet, format that column as **Format → Number → Plain text**.
 
-| Column | What to put |
+The live sheet has a **Panduan** (guide) tab in Indonesian. Columns (English names also work):
+
+| Kolom | Isi |
 |---|---|
-| `id` | Unique number per item. Keep it the same forever, because saved items, bags and product links depend on it |
-| `brand`, `title`, `size` | Free text |
-| `category` | `tops`, `bottoms`, `outerwear`, `footwear`, `accessories` |
-| `type` | Drawing used when there's no photo: `tee`, `longsleeve`, `shirt`, `hoodie`, `jacket`, `pants`, `shorts`, `shoes`, `cap`, `bag` |
-| `color` | Hex colour for the drawing, e.g. `#1f2a44` |
-| `condition` | 1–10 |
-| `price`, `old_price` | `385000` (`Rp385.000` also works). Set `old_price` higher to show a price drop |
-| `listed` | `2026-11-21` or `21/11/2026` |
-| `sold` | `TRUE` moves the item to the Sold Archive |
-| `status` | Optional. `hidden` or `draft` keeps a row off the site |
-| `description` | Free text. Line breaks are kept |
-| `measurements` | `Waist: 84 cm; Inseam: 80 cm` |
-| `images` | Photo links separated by commas. Google Drive links work if the file is shared as "Anyone with the link" |
+| `ID` | Unique number per item. Never change or reuse it |
+| `Brand`, `Nama Produk`, `Ukuran` | Free text. Sizes are stored as text, so `32` is fine |
+| `Kategori` | Dropdown: Atasan, Bawahan, Jaket/Outer, Sepatu, Aksesoris |
+| `Jenis (gambar)` | Dropdown. The drawing shown when there's no photo |
+| `Warna` | Hex colour for the drawing, e.g. `#1f2a44` |
+| `Kondisi` | Dropdown 1–10 |
+| `Harga`, `Harga Lama` | Numbers, shown as Rupiah. Fill in `Harga Lama` to show a price drop |
+| `Tanggal Upload` | dd/mm/yyyy |
+| `Status` | Dropdown: Tersedia (shown), Terjual (moves to Sold Archive), Sembunyikan (hidden) |
+| `Deskripsi` | Free text. Line breaks are kept |
+| `Ukuran Detail` | `Lingkar dada: 56 cm; Panjang: 72 cm` |
+| `Foto 1`–`Foto 4` | Image links. Foto 1 is the main photo, Foto 2 shows on hover, and all of them appear in the product gallery. Google Drive (shared as "Anyone with the link"), Imgur, Dropbox and direct .jpg/.png/.webp links work. More columns named `Foto 5`, `Foto 6`… are picked up too |
 
 Notes:
 - Google can take **up to ~5 minutes** to show sheet edits in the published CSV.

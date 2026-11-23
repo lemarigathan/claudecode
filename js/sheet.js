@@ -73,12 +73,21 @@
     const ok = isNaN(d) ? new Date() : d;
     return `${ok.getFullYear()}-${pad(ok.getMonth() + 1)}-${pad(ok.getDate())}`;
   }
-  function driveLink(u) {
-    const m = u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{10,})/);
-    return m ? `https://lh3.googleusercontent.com/d/${m[1]}=w1200` : u;
+  /* Turn common share links into direct image links */
+  function imageLink(u) {
+    let m;
+    if ((m = u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=|thumbnail\?id=)([\w-]{10,})/)))
+      return `https://lh3.googleusercontent.com/d/${m[1]}=w1200`;
+    if ((m = u.match(/^https?:\/\/(?:www\.)?dropbox\.com\/(.+?)(?:\?.*)?$/)))
+      return `https://www.dropbox.com/${m[1]}?raw=1`;
+    if ((m = u.match(/^https?:\/\/(?:www\.)?imgur\.com\/(\w{5,})$/)))
+      return `https://i.imgur.com/${m[1]}.jpg`;
+    return u;
   }
+  // One or more links per cell, separated by new lines, spaces, or commas before the next link
   const images = (v) =>
-    String(v || "").split(/[\s,]+/).map((s) => s.trim()).filter((s) => /^(https?:\/\/|assets\/|\.?\/)/.test(s)).map(driveLink);
+    String(v || "").split(/\s+|,(?=\s*(?:https?:|assets\/))/).map((s) => s.trim().replace(/,$/, ""))
+      .filter((s) => /^(https?:\/\/|assets\/|\.?\/)/.test(s)).map(imageLink);
   function measurements(v) {
     const out = {};
     String(v || "").split(/[;\n]+/).forEach((part) => {
@@ -92,38 +101,69 @@
   const TYPES = ["tee", "longsleeve", "shirt", "hoodie", "jacket", "pants", "shorts", "shoes", "cap", "bag"];
   const DEFAULT_TYPE = { tops: "tee", bottoms: "pants", outerwear: "jacket", footwear: "shoes", accessories: "cap" };
 
+  /* Column names: English or Indonesian, any case. "Jenis (gambar)" -> "jenis" */
+  const ALIASES = {
+    id: ["id", "kode"],
+    brand: ["brand", "merek", "merk"],
+    title: ["title", "nama_produk", "nama", "produk"],
+    category: ["category", "kategori"],
+    type: ["type", "jenis"],
+    color: ["color", "colour", "warna"],
+    size: ["size", "ukuran"],
+    condition: ["condition", "kondisi"],
+    price: ["price", "harga"],
+    old_price: ["old_price", "oldprice", "original_price", "harga_lama", "harga_coret", "harga_awal"],
+    listed: ["listed", "date", "tanggal", "tanggal_upload", "tanggal_posting"],
+    sold: ["sold", "terjual"],
+    status: ["status"],
+    description: ["description", "deskripsi", "keterangan"],
+    measurements: ["measurements", "measurement", "ukuran_detail", "detail_ukuran"],
+  };
+  const PHOTO_COL = /^(images?|photos?|foto|gambar|image_url|url_foto)(_?\d+)?$/;
+  // Indonesian dropdown labels -> internal values
+  const CAT_MAP = { atasan: "tops", bawahan: "bottoms", outer: "outerwear", jaket: "outerwear", "jaket/outer": "outerwear", sepatu: "footwear", "alas_kaki": "footwear", aksesoris: "accessories", aksesori: "accessories" };
+  const TYPE_MAP = { kaos: "tee", kaos_lengan_panjang: "longsleeve", sweater: "longsleeve", kemeja: "shirt", jaket: "jacket", celana_panjang: "pants", celana: "pants", jeans: "pants", celana_pendek: "shorts", sepatu: "shoes", topi: "cap", tas: "bag" };
+  const key = (v) => String(v || "").trim().toLowerCase().replace(/\(.*?\)/g, "").trim().replace(/[\s-]+/g, "_");
+
   function toProducts(rows) {
     if (rows.length < 2) throw new Error("Sheet has no product rows");
-    const head = rows[0].map((h) => h.trim().toLowerCase().replace(/[\s-]+/g, "_"));
-    const col = (r, ...names) => {
-      for (const n of names) { const i = head.indexOf(n); if (i > -1) return (r[i] || "").trim(); }
-      return "";
-    };
-    if (!head.includes("title") || !head.includes("price")) throw new Error("Sheet needs at least 'title' and 'price' columns");
-    return rows.slice(1).map((r, idx) => {
-      const category = (col(r, "category").toLowerCase() || "tops");
-      const type = col(r, "type").toLowerCase();
-      const old = num(col(r, "old_price", "oldprice", "original_price"));
+    const head = rows[0].map(key);
+    const idx = {};
+    for (const [canon, names] of Object.entries(ALIASES)) {
+      const i = head.findIndex((h) => names.includes(h));
+      if (i > -1) idx[canon] = i;
+    }
+    const photoCols = head.map((h, i) => (PHOTO_COL.test(h) ? i : -1)).filter((i) => i > -1);
+    if (idx.title == null || idx.price == null) throw new Error("Sheet needs at least a title/'Nama Produk' and price/'Harga' column");
+    const col = (r, c) => (idx[c] == null ? "" : String(r[idx[c]] || "").trim());
+
+    return rows.slice(1).map((r, n) => {
+      const catRaw = key(col(r, "category"));
+      const category = CATS.includes(catRaw) ? catRaw : CAT_MAP[catRaw] || "accessories";
+      const typeRaw = key(col(r, "type"));
+      const type = TYPES.includes(typeRaw) ? typeRaw : TYPE_MAP[typeRaw] || DEFAULT_TYPE[category] || "tee";
       const price = num(col(r, "price"));
+      const old = num(col(r, "old_price"));
       const cond = num(col(r, "condition"));
-      const color = col(r, "color", "colour");
+      const color = col(r, "color");
+      const status = col(r, "status").toLowerCase();
       return {
-        id: num(col(r, "id")) || idx + 1,
+        id: num(col(r, "id")) || n + 1,
         brand: col(r, "brand") || "Vintage",
         title: col(r, "title"),
-        category: CATS.includes(category) ? category : "accessories",
-        type: TYPES.includes(type) ? type : DEFAULT_TYPE[category] || "tee",
+        category,
+        type,
         color: /^#[0-9a-f]{6}$/i.test(color) ? color : "#8a8a8a",
         size: col(r, "size") || "OS",
         condition: Math.min(10, Math.max(1, cond || 8)),
         price,
         oldPrice: old > price ? old : undefined,
-        listed: date(col(r, "listed", "date")),
-        sold: truthy(col(r, "sold", "status")),
+        listed: date(col(r, "listed")),
+        sold: truthy(col(r, "sold")) || /^(sold|terjual|laku)/.test(status),
         description: col(r, "description"),
         measurements: measurements(col(r, "measurements")),
-        images: images(col(r, "images", "image", "photos")),
-        hidden: /^(hide|hidden|draft)$/i.test(col(r, "status")) || truthy(col(r, "hidden")),
+        images: photoCols.flatMap((i) => images(r[i])),
+        hidden: /^(hide|hidden|draft|sembunyi|disembunyikan|arsip)/.test(status),
       };
     }).filter((p) => p.title && p.price > 0 && !p.hidden);
   }
@@ -215,5 +255,5 @@
   };
 
   // exposed for testing
-  window.__sheet = { parseCSV, toProducts, csvURL, date, gvizRows };
+  window.__sheet = { parseCSV, toProducts, csvURL, date, gvizRows, images };
 })();
