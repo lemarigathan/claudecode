@@ -1,11 +1,12 @@
 /* =========================================================
    LEMARI GATHAN — app
    ========================================================= */
-(() => {
+(async () => {
   "use strict";
 
   const S = window.STORE;
-  const P = window.PRODUCTS;
+  const { products: P, source: DATA_SOURCE } = await window.loadProducts();
+  document.documentElement.dataset.source = DATA_SOURCE;
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

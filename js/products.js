@@ -3,6 +3,9 @@
    ---------------------------------------------------------
    Edit this file to manage the shop. No build step needed.
 
+   Using Google Sheets instead? Set STORE.sheetCSV below. The
+   PRODUCTS list is then only used as a fallback (see README).
+
    STORE: your contact details (used for checkout links).
    PRODUCTS: one object per item.
      - images: optional array of photo paths, e.g.
@@ -21,6 +24,11 @@ window.STORE = {
   email: "hello@lemarigathan.com",
   city: "Medan, Indonesia",
   currency: "IDR",
+
+  // Google Sheets backend: paste your "Publish to web" CSV link here.
+  // Leave empty ("") to use the PRODUCTS list below instead.
+  // Example: "https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?gid=0&single=true&output=csv"
+  sheetCSV: "",
 };
 
 window.PRODUCTS = [
