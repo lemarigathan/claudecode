@@ -212,7 +212,7 @@
       if (ia > -1 && ib > -1) return ia - ib;
       if (ia > -1) return -1;
       if (ib > -1) return 1;
-      return parseFloat(a) - parseFloat(b);
+      return a.localeCompare(b, undefined, { numeric: true });
     });
     $("#fSize").innerHTML = sizes.map((s) => `<button class="size-btn" data-size="${esc(s)}">${esc(s)}</button>`).join("");
     $("#fCond").innerHTML = [10, 9, 8, 7]

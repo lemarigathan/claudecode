@@ -2,7 +2,9 @@
    LEMARI GATHAN — Google Sheets backend
    ---------------------------------------------------------
    Reads the inventory from a Google Sheet published as CSV
-   (set STORE.sheetCSV in js/products.js).
+   (set STORE.sheetCSV in js/products.js). Either link works:
+     - the normal sheet link, with sharing set to "Anyone with the link: Viewer"
+     - a File → Share → Publish to web → CSV link
 
    Order of preference:
      1. Live sheet
@@ -62,7 +64,11 @@
     v = String(v || "").trim();
     let m;
     if ((m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return `${m[1]}-${pad(m[2])}-${pad(m[3])}`;
-    if ((m = v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/))) return `${m[3]}-${pad(m[2])}-${pad(m[1])}`; // DD/MM/YYYY
+    if ((m = v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/))) {
+      // DD/MM/YYYY (Indonesian format); switch to MM/DD/YYYY when the second part can't be a month
+      const [d, mo] = +m[2] > 12 ? [m[2], m[1]] : [m[1], m[2]];
+      return `${m[3]}-${pad(mo)}-${pad(d)}`;
+    }
     const d = v ? new Date(v) : new Date();
     const ok = isNaN(d) ? new Date() : d;
     return `${ok.getFullYear()}-${pad(ok.getMonth() + 1)}-${pad(ok.getDate())}`;
@@ -122,7 +128,17 @@
     }).filter((p) => p.title && p.price > 0 && !p.hidden);
   }
 
+  /* Accept a normal Google Sheets link (shared "Anyone with the link") and
+     turn it into a CSV feed. "Publish to web" CSV links are used as-is. */
+  function csvURL(url) {
+    const m = url.match(/docs\.google\.com\/spreadsheets\/d\/([\w-]{20,})/);
+    if (!m || /\/pub\b|output=csv|tqx=out:csv/.test(url)) return url;
+    const gid = (url.match(/[#&?]gid=(\d+)/) || [])[1];
+    return `https://docs.google.com/spreadsheets/d/${m[1]}/gviz/tq?tqx=out:csv&headers=1${gid ? "&gid=" + gid : ""}`;
+  }
+
   async function fetchSheet(url) {
+    url = csvURL(url);
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), TIMEOUT);
     try {
@@ -153,5 +169,5 @@
   };
 
   // exposed for testing
-  window.__sheet = { parseCSV, toProducts };
+  window.__sheet = { parseCSV, toProducts, csvURL, date };
 })();

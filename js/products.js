@@ -25,17 +25,18 @@ window.STORE = {
   city: "Medan, Indonesia",
   currency: "IDR",
 
-  // Google Sheets backend: paste your "Publish to web" CSV link here.
+  // Google Sheets backend: your sheet's link (shared as "Anyone with the link")
+  // or a "Publish to web" CSV link.
   // Leave empty ("") to use the PRODUCTS list below instead.
   // Example: "https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?gid=0&single=true&output=csv"
-  sheetCSV: "",
+  sheetCSV: "https://docs.google.com/spreadsheets/d/19tK7LdlYWz5pOEZannuICG4a7c071jyv4lVoDvCfJ3A/edit",
 };
 
 window.PRODUCTS = [
   {
     id: 1, brand: "Levi's", title: "Vintage 568 Loose Straight Denim — Faded Black",
     category: "bottoms", type: "pants", color: "#3b3f46",
-    size: "32", condition: 9, price: 385000, oldPrice: 450000,
+    size: "W32", condition: 9, price: 385000, oldPrice: 450000,
     listed: "2026-11-21", sold: false,
     measurements: { Waist: "84 cm", Rise: "31 cm", Inseam: "80 cm", "Leg opening": "24 cm" },
     description: "Loose straight fit with a heavy fade on the thighs. Hem cuffed once in the photos. No holes, no stains.",
@@ -71,7 +72,7 @@ window.PRODUCTS = [
   {
     id: 5, brand: "Nike", title: "Air Force 1 '07 Low — Triple White",
     category: "footwear", type: "shoes", color: "#efefef",
-    size: "42.5", condition: 8, price: 700000,
+    size: "EU 42.5", condition: 8, price: 700000,
     listed: "2026-11-16", sold: false,
     measurements: { "EU size": "42.5", "Insole": "27 cm" },
     description: "Deep cleaned, minor creasing on the toe box. Soles have plenty of life left. No box.",
@@ -89,7 +90,7 @@ window.PRODUCTS = [
   {
     id: 7, brand: "Dickies", title: "874 Original Work Pant — Khaki",
     category: "bottoms", type: "pants", color: "#b9a37a",
-    size: "30", condition: 9, price: 260000,
+    size: "W30", condition: 9, price: 260000,
     listed: "2026-11-22", sold: false,
     measurements: { Waist: "78 cm", Rise: "30 cm", Inseam: "78 cm", "Leg opening": "22 cm" },
     description: "Crease still sharp. Straight leg, sits at the waist. Barely worn.",
@@ -134,7 +135,7 @@ window.PRODUCTS = [
   {
     id: 12, brand: "Adidas", title: "Samba OG — Black / White Gum",
     category: "footwear", type: "shoes", color: "#1e1e1e",
-    size: "41", condition: 9, price: 950000,
+    size: "EU 41", condition: 9, price: 950000,
     listed: "2026-11-22", sold: false,
     measurements: { "EU size": "41", "Insole": "26 cm" },
     description: "Worn twice, gum sole still bright. Comes with original box.",
@@ -152,7 +153,7 @@ window.PRODUCTS = [
   {
     id: 14, brand: "Vintage", title: "Baggy Wide Leg Denim — Washed Black",
     category: "bottoms", type: "pants", color: "#2b2b2f",
-    size: "32", condition: 9, price: 1650000,
+    size: "W32", condition: 9, price: 1650000,
     listed: "2026-11-05", sold: true,
     measurements: { Waist: "84 cm", Rise: "33 cm", Inseam: "82 cm", "Leg opening": "28 cm" },
     description: "The pair from the lookbook photo. Gone to a good home.",
