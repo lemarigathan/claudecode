@@ -1,7 +1,5 @@
-name: Publish site to gh-pages
+name: Deploy to GitHub Pages
 
-# GitHub Pages serves the site from the gh-pages branch.
-# Every push here copies the site files into that branch.
 on:
   push:
     branches: ["claude/wonderful-franklin-0xqmq8", "main"]
@@ -10,23 +8,31 @@ on:
 permissions:
   contents: write
   pages: write
+  id-token: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  publish:
+  deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Copy site into gh-pages
+
+      - name: Prepare site
         run: |
-          mkdir /tmp/site
+          mkdir -p /tmp/site
           cp -r index.html favicon.ico site.webmanifest css js assets /tmp/site/
           touch /tmp/site/.nojekyll
           # cache-bust: make browsers load the new CSS/JS after each deploy
           sed -i "s/?v=dev/?v=${GITHUB_SHA::7}/g" /tmp/site/index.html
+
+      - name: Keep gh-pages branch in sync
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin gh-pages
@@ -34,17 +40,11 @@ jobs:
           git rm -rq --ignore-unmatch .
           cp -r /tmp/site/. .
           git add -A
-          if git diff --cached --quiet; then echo "No changes"; else
-            git commit -m "Publish ${GITHUB_SHA::7}"
-            git push origin gh-pages
-          fi
-      # Pushes made with GITHUB_TOKEN don't start a Pages build on their own,
-      # so ask GitHub to rebuild the site from gh-pages explicitly.
-      - name: Request Pages build
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          curl -fsS -X POST \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages/builds"
+          if ! git diff --cached --quiet; then git commit -m "Publish ${GITHUB_SHA::7}" && git push origin gh-pages; fi
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: /tmp/site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
