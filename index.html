@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lemari Gathan — Curated Preloved Clothing</title>
+  <meta name="description" content="Lemari Gathan is a small, personal preloved shop. Hand-picked, cleaned, and fairly priced second-hand menswear and streetwear." />
+  <meta name="theme-color" content="#ffffff" />
+  <meta property="og:title" content="Lemari Gathan — Curated Preloved Clothing" />
+  <meta property="og:description" content="Hand-picked, cleaned, and fairly priced second-hand pieces." />
+  <meta property="og:image" content="assets/icons/icon-512.png" />
+
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/icon-32.png" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-180.png" />
+  <link rel="manifest" href="site.webmanifest" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="is-loading">
+
+  <!-- Intro loader -->
+  <div class="loader" aria-hidden="true">
+    <div class="loader__word">
+      <span>L</span><span>E</span><span>M</span><span>A</span><span>R</span><span>I</span>
+      <span class="sp"></span>
+      <span>G</span><span>A</span><span>T</span><span>H</span><span>A</span><span>N</span>
+    </div>
+    <div class="loader__bar"><i></i></div>
+  </div>
+
+  <!-- Announcement bar -->
+  <div class="announce" role="region" aria-label="Announcements">
+    <div class="announce__track">
+      <span>New drops every Friday, 7 PM WIB</span><span>✦</span>
+      <span>Every piece washed &amp; checked by hand</span><span>✦</span>
+      <span>Free shipping around Medan</span><span>✦</span>
+      <span>Nationwide shipping via JNE / J&amp;T / SiCepat</span><span>✦</span>
+      <span>New drops every Friday, 7 PM WIB</span><span>✦</span>
+      <span>Every piece washed &amp; checked by hand</span><span>✦</span>
+      <span>Free shipping around Medan</span><span>✦</span>
+      <span>Nationwide shipping via JNE / J&amp;T / SiCepat</span><span>✦</span>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="header" id="top">
+    <div class="header__row container">
+      <button class="icon-btn header__menu" id="menuBtn" aria-label="Open menu">
+        <svg viewBox="0 0 24 24"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
+      </button>
+
+      <a href="#" class="logo" aria-label="Lemari Gathan home">
+        <span class="logo__a">LEMARI</span><span class="logo__b">GATHAN</span>
+      </a>
+
+      <label class="search" for="searchInput">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="searchInput" type="search" placeholder="Search brands, items, sizes…" autocomplete="off" />
+        <kbd>/</kbd>
+      </label>
+
+      <nav class="header__actions" aria-label="Account">
+        <a href="#sell" class="btn btn--ghost btn--sm hide-sm">Sell to us</a>
+        <button class="icon-btn" id="savedBtn" aria-label="Saved items">
+          <svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 7.9 3.6 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg>
+          <span class="badge" id="savedCount">0</span>
+        </button>
+        <button class="icon-btn" id="bagBtn" aria-label="Bag">
+          <svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+          <span class="badge" id="bagCount">0</span>
+        </button>
+      </nav>
+    </div>
+
+    <nav class="catnav" aria-label="Categories">
+      <div class="catnav__inner container" id="catnav">
+        <button class="catnav__link is-active" data-cat="all">All</button>
+        <button class="catnav__link" data-cat="tops">Tops</button>
+        <button class="catnav__link" data-cat="bottoms">Bottoms</button>
+        <button class="catnav__link" data-cat="outerwear">Outerwear</button>
+        <button class="catnav__link" data-cat="footwear">Footwear</button>
+        <button class="catnav__link" data-cat="accessories">Accessories</button>
+        <button class="catnav__link catnav__link--sale" data-cat="sale">Price Drops</button>
+        <button class="catnav__link" data-cat="sold">Sold Archive</button>
+        <span class="catnav__ink" aria-hidden="true"></span>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Mobile menu -->
+  <div class="mmenu" id="mmenu" aria-hidden="true">
+    <div class="mmenu__panel">
+      <div class="mmenu__head">
+        <span class="logo"><span class="logo__a">LEMARI</span><span class="logo__b">GATHAN</span></span>
+        <button class="icon-btn" data-close aria-label="Close menu"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <nav class="mmenu__links">
+        <a href="#shop" data-close>Shop all</a>
+        <a href="#categories" data-close>Categories</a>
+        <a href="#how" data-close>How it works</a>
+        <a href="#about" data-close>About</a>
+        <a href="#sell" data-close>Sell to us</a>
+      </nav>
+    </div>
+  </div>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero container">
+      <div class="hero__copy">
+        <p class="eyebrow reveal">Personal preloved shop · Est. Medan</p>
+        <h1 class="hero__title">
+          <span class="line"><span>Second-hand</span></span>
+          <span class="line"><span>pieces,</span></span>
+          <span class="line"><span><em>first-rate</em> taste.</span></span>
+        </h1>
+        <p class="hero__sub reveal">Hand-picked menswear and streetwear straight from my <i>lemari</i> (wardrobe) to yours. Every item is washed, checked, and honestly graded.</p>
+        <div class="hero__cta reveal">
+          <a href="#shop" class="btn btn--dark magnetic">Shop the drop
+            <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a href="#how" class="btn btn--ghost">How it works</a>
+        </div>
+        <dl class="hero__stats reveal">
+          <div><dt><span class="count" data-to="320">0</span>+</dt><dd>Pieces rehomed</dd></div>
+          <div><dt><span class="count" data-to="4.9" data-dec="1">0</span>★</dt><dd>Buyer rating</dd></div>
+          <div><dt><span class="count" data-to="24">0</span>h</dt><dd>Avg. ship time</dd></div>
+        </dl>
+      </div>
+
+      <figure class="hero__media">
+        <div class="hero__img" id="heroImg">
+          <img src="assets/img/gathan.webp" alt="Gathan wearing an oversized navy tee and baggy washed denim in front of a white colonial house" width="1200" height="1600" fetchpriority="high" />
+        </div>
+        <figcaption class="hero__tag">
+          <span class="dot"></span>
+          <div>
+            <small>Currently in the lemari</small>
+            <strong id="liveCount">— items available</strong>
+          </div>
+        </figcaption>
+        <div class="hero__sticker" aria-hidden="true">
+          <svg viewBox="0 0 120 120"><defs><path id="circ" d="M60 60m-46 0a46 46 0 1 1 92 0a46 46 0 1 1-92 0"/></defs>
+            <text><textPath href="#circ">PRELOVED · CURATED · CLEANED · </textPath></text></svg>
+          <span>LG</span>
+        </div>
+      </figure>
+    </section>
+
+    <!-- Brand marquee -->
+    <section class="brands" aria-label="Brands we carry">
+      <div class="brands__track">
+        <span>Levi's</span><span>Carhartt</span><span>Stüssy</span><span>Nike</span><span>Uniqlo U</span><span>Ralph Lauren</span><span>Dickies</span><span>Patagonia</span><span>Adidas</span><span>The North Face</span><span>Champion</span><span>Porter</span>
+        <span>Levi's</span><span>Carhartt</span><span>Stüssy</span><span>Nike</span><span>Uniqlo U</span><span>Ralph Lauren</span><span>Dickies</span><span>Patagonia</span><span>Adidas</span><span>The North Face</span><span>Champion</span><span>Porter</span>
+      </div>
+    </section>
+
+    <!-- Categories -->
+    <section class="section container" id="categories">
+      <div class="section__head reveal">
+        <h2>Shop by category</h2>
+        <a href="#shop" class="link-arrow">View all</a>
+      </div>
+      <div class="cats" id="catTiles"></div>
+    </section>
+
+    <!-- Shop -->
+    <section class="section container" id="shop">
+      <div class="section__head reveal">
+        <div>
+          <h2 id="shopTitle">Fresh in the lemari</h2>
+          <p class="muted" id="resultCount">—</p>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn--ghost btn--sm filter-toggle" id="filterToggle">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg> Filters
+          </button>
+          <label class="select">
+            <span class="sr-only">Sort by</span>
+            <select id="sortSelect">
+              <option value="new">Newest first</option>
+              <option value="low">Price: low to high</option>
+              <option value="high">Price: high to low</option>
+              <option value="cond">Best condition</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="shop">
+        <aside class="filters" id="filters" aria-label="Filters">
+          <div class="filters__head">
+            <strong>Filters</strong>
+            <button class="link" id="clearFilters">Clear all</button>
+            <button class="icon-btn filters__close" id="filterClose" aria-label="Close filters"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+          </div>
+
+          <details class="fgroup" open>
+            <summary>Category</summary>
+            <div class="fgroup__body" id="fCategory"></div>
+          </details>
+
+          <details class="fgroup" open>
+            <summary>Size</summary>
+            <div class="fgroup__body sizes" id="fSize"></div>
+          </details>
+
+          <details class="fgroup" open>
+            <summary>Condition</summary>
+            <div class="fgroup__body" id="fCond"></div>
+          </details>
+
+          <details class="fgroup" open>
+            <summary>Max price</summary>
+            <div class="fgroup__body">
+              <input type="range" id="fPrice" min="100000" max="2500000" step="50000" value="2500000" />
+              <div class="range-label"><span>Rp100k</span><strong id="fPriceLabel">Any</strong></div>
+            </div>
+          </details>
+
+          <label class="switch">
+            <input type="checkbox" id="fSaved" />
+            <span class="switch__ui"></span>
+            Saved items only
+          </label>
+          <button class="btn btn--dark btn--block filters__apply" id="filterApply">Show results</button>
+        </aside>
+
+        <div class="shop__main">
+          <div class="chips" id="activeChips"></div>
+          <div class="grid" id="grid"></div>
+          <div class="empty" id="empty" hidden>
+            <svg viewBox="0 0 64 64"><path d="M14 10h36v44H14z"/><path d="M32 10v44M27 30h2M35 30h2"/></svg>
+            <h3>Nothing in the lemari matches that.</h3>
+            <p class="muted">Try clearing a filter, or DM me — I might have it in the next drop.</p>
+            <button class="btn btn--ghost btn--sm" id="emptyClear">Clear filters</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sell banner -->
+    <section class="banner container reveal" id="sell">
+      <div class="banner__inner">
+        <div>
+          <p class="eyebrow eyebrow--light">Sell / consign</p>
+          <h2>Got something gathering dust in <em>your</em> lemari?</h2>
+          <p>I buy outright or consign good-condition menswear, streetwear and sneakers. Send a few photos and I'll reply with an offer within a day.</p>
+        </div>
+        <a class="btn btn--light magnetic" id="sellLink" target="_blank" rel="noopener">Send photos on WhatsApp
+          <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="section container" id="how">
+      <div class="section__head reveal"><h2>How it works</h2></div>
+      <ol class="steps">
+        <li class="reveal"><span class="steps__n">01</span><h3>Pick your piece</h3><p>Browse the drop, check measurements, and add what you like to your bag. Every item is one of one.</p></li>
+        <li class="reveal"><span class="steps__n">02</span><h3>Checkout via chat</h3><p>Tap checkout and your order lands in my WhatsApp. I'll confirm, send shipping cost, and hold it for you.</p></li>
+        <li class="reveal"><span class="steps__n">03</span><h3>Packed &amp; shipped</h3><p>Paid before 3 PM ships same day. You get a tracking number and a little thank-you note.</p></li>
+      </ol>
+
+      <div class="grades reveal">
+        <h3>Condition guide</h3>
+        <div class="grades__row">
+          <div><b>10/10</b><span>New with tags</span></div>
+          <div><b>9/10</b><span>Like new, barely worn</span></div>
+          <div><b>8/10</b><span>Lightly worn, no flaws</span></div>
+          <div><b>7/10</b><span>Worn, minor flaws shown</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section class="about container" id="about">
+      <div class="about__img reveal reveal--clip">
+        <img src="assets/img/gathan.webp" alt="Gathan, the person behind Lemari Gathan" loading="lazy" width="1200" height="1600" />
+      </div>
+      <div class="about__copy">
+        <p class="eyebrow reveal">About the lemari</p>
+        <h2 class="reveal">One wardrobe, passed on with care.</h2>
+        <p class="reveal">Lemari Gathan started as me clearing out pieces I loved but didn't wear enough. Now it's a small, personal shop for good clothes that deserve a second run — oversized tees, honest denim, workwear and sneakers.</p>
+        <p class="reveal">No mystery bundles, no bad photos. What you see is what you get, measured and graded by me.</p>
+        <div class="about__links reveal">
+          <a class="btn btn--dark" id="igLink" target="_blank" rel="noopener">Follow on Instagram</a>
+          <a class="link-arrow" id="waLink" target="_blank" rel="noopener">Chat on WhatsApp</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Newsletter -->
+    <section class="news container reveal">
+      <h2>Never miss a Friday drop.</h2>
+      <p class="muted">Get a heads-up an hour before new pieces go live.</p>
+      <form class="news__form" id="newsForm">
+        <input type="email" required placeholder="you@email.com" aria-label="Email address" />
+        <button class="btn btn--dark" type="submit">Notify me</button>
+      </form>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__grid">
+      <div>
+        <a href="#" class="logo logo--lg"><span class="logo__a">LEMARI</span><span class="logo__b">GATHAN</span></a>
+        <p class="muted">Curated preloved clothing.<br /><span id="footCity"></span></p>
+      </div>
+      <div>
+        <h4>Shop</h4>
+        <a href="#shop" data-jump="tops">Tops</a>
+        <a href="#shop" data-jump="bottoms">Bottoms</a>
+        <a href="#shop" data-jump="outerwear">Outerwear</a>
+        <a href="#shop" data-jump="footwear">Footwear</a>
+      </div>
+      <div>
+        <h4>Help</h4>
+        <a href="#how">How it works</a>
+        <a href="#how">Condition guide</a>
+        <a href="#sell">Sell to us</a>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <a id="footWa" target="_blank" rel="noopener">WhatsApp</a>
+        <a id="footIg" target="_blank" rel="noopener">Instagram</a>
+        <a id="footMail">Email</a>
+      </div>
+    </div>
+    <div class="container footer__bottom">
+      <span>© <span id="year"></span> Lemari Gathan. All items are pre-owned.</span>
+      <a href="#top" class="link-arrow link-arrow--up">Back to top</a>
+    </div>
+  </footer>
+
+  <!-- Product modal -->
+  <div class="modal" id="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__panel">
+      <button class="icon-btn modal__close" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <div class="modal__body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Drawer: bag & saved -->
+  <div class="drawer" id="drawer" aria-hidden="true">
+    <div class="drawer__backdrop" data-close></div>
+    <aside class="drawer__panel" role="dialog" aria-modal="true" aria-label="Bag and saved items">
+      <div class="drawer__head">
+        <div class="tabs" role="tablist">
+          <button role="tab" class="tab is-active" data-tab="bag">Bag <span id="tabBagCount">0</span></button>
+          <button role="tab" class="tab" data-tab="saved">Saved <span id="tabSavedCount">0</span></button>
+          <span class="tabs__ink"></span>
+        </div>
+        <button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div class="drawer__list" id="drawerList"></div>
+      <div class="drawer__foot" id="drawerFoot">
+        <div class="drawer__total"><span>Subtotal</span><strong id="bagTotal">Rp0</strong></div>
+        <p class="muted small">Shipping is calculated in chat based on your city.</p>
+        <a class="btn btn--dark btn--block" id="checkoutBtn" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/></svg> Checkout via WhatsApp
+        </a>
+      </div>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/products.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
