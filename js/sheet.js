@@ -170,16 +170,17 @@
 
   /* Accept a normal Google Sheets link (shared "Anyone with the link") and
      turn it into a CSV feed. "Publish to web" CSV links are used as-is. */
-  function csvURL(url) {
+  function csvURL(url, tab) {
     const m = url.match(/docs\.google\.com\/spreadsheets\/d\/([\w-]{20,})/);
     if (!m || /\/pub\b|output=csv|tqx=out:csv/.test(url)) return url;
     const gid = (url.match(/[#&?]gid=(\d+)/) || [])[1];
-    return `https://docs.google.com/spreadsheets/d/${m[1]}/gviz/tq?tqx=out:csv&headers=1${gid ? "&gid=" + gid : ""}`;
+    const pick = tab ? "&sheet=" + encodeURIComponent(tab) : gid ? "&gid=" + gid : "";
+    return `https://docs.google.com/spreadsheets/d/${m[1]}/gviz/tq?tqx=out:csv&headers=1${pick}`;
   }
 
   /* JSONP via Google's gviz endpoint. Loaded as a <script>, so it isn't
      subject to cross-origin (CORS) restrictions the way fetch() is. */
-  function sheetJSONP(url) {
+  function sheetJSONP(url, tab) {
     const id = (url.match(/docs\.google\.com\/spreadsheets\/d\/([\w-]{20,})/) || [])[1];
     if (!id || /\/d\/e\//.test(url)) return Promise.reject(new Error("Not a regular sheet link"));
     const gid = (url.match(/[#&?]gid=(\d+)/) || [])[1];
@@ -196,7 +197,8 @@
         try { done(resolve, gvizRows(resp.table)); } catch (err) { done(reject, err); }
       };
       s.onerror = () => done(reject, new Error("Could not load the sheet (is it shared as 'Anyone with the link'?)"));
-      s.src = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json;responseHandler:${cb}&headers=1${gid ? "&gid=" + gid : ""}&_=${Date.now()}`;
+      const pick = tab ? "&sheet=" + encodeURIComponent(tab) : gid ? "&gid=" + gid : "";
+      s.src = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json;responseHandler:${cb}&headers=1${pick}&_=${Date.now()}`;
       document.head.appendChild(s);
     });
   }
@@ -211,11 +213,12 @@
     const head = table.cols.map((c) => (c.label || "").trim());
     const body = table.rows.map((r) => (r.c || []).map(gvizCell));
     // If Google didn't detect the header row, the first data row is the header
-    return head.some((h) => /^title$/i.test(h)) ? [head, ...body] : body;
+    return head.filter(Boolean).length >= 2 ? [head, ...body] : body;
   }
 
-  async function fetchCSV(url) {
-    url = csvURL(url);
+  async function fetchCSV(url, tab) {
+    if (tab && /\/pub\b|output=csv/.test(url)) throw new Error("Publish-to-web links can't read other tabs");
+    url = csvURL(url, tab);
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), TIMEOUT);
     try {
@@ -227,6 +230,17 @@
       return parseCSV(text);
     } finally { clearTimeout(t); }
   }
+
+  // Rows of a tab (first tab when `tab` is empty): JSONP first, CSV as a fallback
+  async function fetchRows(url, tab) {
+    const errors = [];
+    for (const method of [sheetJSONP, fetchCSV]) {
+      try { return await method(url, tab); }
+      catch (err) { errors.push(`${method.name}: ${err.message}`); }
+    }
+    throw new Error(errors.join(" | "));
+  }
+  window.fetchSheetRows = fetchRows;
 
   async function fetchSheet(url) {
     const errors = [];

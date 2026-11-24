@@ -15,6 +15,15 @@ Everything lives in `js/products.js`:
   - Set `oldPrice` to show a price drop.
   - Set `sold: true` to move the item to the Sold Archive.
 
+## Edit the whole site from the sheet
+The backend spreadsheet has three tabs:
+
+- **Produk**: the inventory (see below).
+- **Pengaturan**: every other piece of the site, one row each: announcement bar, video, hero text, photo and stats, brand list, category names, sell banner, how it works, condition guide, About, newsletter, footer, WhatsApp number, Instagram, button labels and the pre-filled WhatsApp messages. Each section has a **Tampilkan?** switch (Ya/Tidak). Only the yellow **Isi** column is edited. An empty cell keeps the built-in text. `*miring*` and `**tebal**` format text, and new lines inside a cell are kept.
+- **Panduan**: a guide in Indonesian.
+
+How it works in code: elements in `index.html` carry `data-cms="key"`, text built by `js/app.js` uses `T("key")`, and `js/site.js` lists every key (`FIELDS`), loads the **Pengaturan** tab and applies it before the page renders. To make something new editable, add a `data-cms` attribute plus a row in `FIELDS`, then add the same key as a row in the sheet.
+
 ## Use Google Sheets as the backend (recommended)
 Manage the shop from a spreadsheet. Edit a row and the site updates on the next page load, with no code or redeploy.
 
