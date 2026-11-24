@@ -5,7 +5,7 @@
   "use strict";
 
   const S = window.STORE;
-  const { products: P, source: DATA_SOURCE } = await window.loadProducts();
+  const [{ products: P, source: DATA_SOURCE }] = await Promise.all([window.loadProducts(), window.loadSite()]);
   document.documentElement.dataset.source = DATA_SOURCE;
   // Price slider ceiling follows the most expensive item (rounded up to the next Rp500k)
   const PRICE_MAX = Math.max(500000, Math.ceil(Math.max(0, ...P.map((p) => p.price)) / 500000) * 500000);
@@ -33,11 +33,11 @@
   };
   const byId = (id) => P.find((p) => p.id === +id);
   const CATS = {
-    tops: { label: "Tops", art: ["tee", "#1f2a44"] },
-    bottoms: { label: "Bottoms", art: ["pants", "#3b3f46"] },
-    outerwear: { label: "Outerwear", art: ["jacket", "#8a5a2b"] },
-    footwear: { label: "Footwear", art: ["shoes", "#efefef"] },
-    accessories: { label: "Accessories", art: ["cap", "#2a2a2a"] },
+    tops: { label: T("kategori.tops", "Tops"), art: ["tee", "#1f2a44"] },
+    bottoms: { label: T("kategori.bottoms", "Bottoms"), art: ["pants", "#3b3f46"] },
+    outerwear: { label: T("kategori.outerwear", "Outerwear"), art: ["jacket", "#8a5a2b"] },
+    footwear: { label: T("kategori.footwear", "Footwear"), art: ["shoes", "#efefef"] },
+    accessories: { label: T("kategori.accessories", "Accessories"), art: ["cap", "#2a2a2a"] },
   };
   const COND = { 10: "New with tags", 9: "Like new", 8: "Lightly worn", 7: "Worn" };
 
@@ -175,7 +175,7 @@
           ${p.images && p.images.length > 1 ? `<span class="card__count">${p.images.length} foto</span>` : ""}
           ${tag}
           <button class="heart${saved.has(p.id) ? " is-on" : ""}" data-save="${p.id}" aria-label="Save item" aria-pressed="${saved.has(p.id)}">${heartSVG}${burst}</button>
-          ${p.sold ? "" : `<button class="card__quick" data-open="${p.id}">Quick view</button>`}
+          ${p.sold ? "" : `<button class="card__quick" data-open="${p.id}">${esc(T("ui.quick"))}</button>`}
         </div>
         <div class="card__meta"><span class="card__brand">${esc(p.brand)}</span><span>${ago(p.listed)}</span></div>
         <p class="card__title">${esc(p.title)}</p>
@@ -193,7 +193,7 @@
     grid.innerHTML = list.map(card).join("");
     $("#empty").hidden = list.length > 0;
     $("#resultCount").textContent = `${list.length} ${list.length === 1 ? "listing" : "listings"}`;
-    const titles = { all: "Fresh in the lemari", sale: "Price drops", sold: "Sold archive" };
+    const titles = { all: T("produk.judul"), sale: T("produk.judul_sale"), sold: T("produk.judul_sold") };
     let title = titles[state.mode];
     if (state.mode === "all" && state.cats.size === 1) title = CATS[[...state.cats][0]].label;
     if (state.q) title = `Results for “${state.q}”`;
@@ -388,7 +388,7 @@
     store.set("bag", bag);
     updateBadges("bag");
     toast(`Added ${p.brand} to bag`);
-    $$(`[data-add="${id}"]`).forEach((b) => (b.innerHTML = "In your bag ✓"));
+    $$(`[data-add="${id}"]`).forEach((b) => (b.textContent = T("ui.inbag")));
   }
   function removeFromBag(id, row) {
     id = +id;
@@ -439,14 +439,14 @@
           </div>
           <div class="line-item__side">
             <span>${p.sold ? "Sold" : rupiah(p.price)}</span>
-            ${tab === "bag" ? `<button data-remove="${p.id}">Remove</button>` : `${!p.sold && !bag.includes(p.id) ? `<button data-move="${p.id}">Add to bag</button>` : ""}<button data-unsave="${p.id}">Remove</button>`}
+            ${tab === "bag" ? `<button data-remove="${p.id}">Remove</button>` : `${!p.sold && !bag.includes(p.id) ? `<button data-move="${p.id}">${esc(T("ui.add"))}</button>` : ""}<button data-unsave="${p.id}">Remove</button>`}
           </div>
         </div>`)
       .join("");
     foot.hidden = tab !== "bag";
     const total = list.reduce((s, p) => s + p.price, 0);
     $("#bagTotal").textContent = rupiah(total);
-    const msg = `Hi Lemari Gathan! I'd like to order:\n\n` + list.map((p, i) => `${i + 1}. ${p.brand} — ${p.title} (Size ${p.size}) — ${rupiah(p.price)}`).join("\n") +
+    const msg = T("ui.pesan_checkout") + "\n\n" + list.map((p, i) => `${i + 1}. ${p.brand} — ${p.title} (Size ${p.size}) — ${rupiah(p.price)}`).join("\n") +
       `\n\nSubtotal: ${rupiah(total)}\n\nMy city: `;
     $("#checkoutBtn").href = wa(msg);
   }
@@ -518,23 +518,23 @@
           </div>
           <div class="pd__actions">
             ${p.sold
-              ? `<a class="btn btn--dark" href="${wa(`Hi! I saw the sold ${p.brand} ${p.title} — do you have anything similar?`)}" target="_blank" rel="noopener">Ask for something similar</a>`
-              : `<a class="btn btn--dark magnetic" href="${wa(`Hi Lemari Gathan! I want to buy:\n${p.brand} — ${p.title} (Size ${p.size}) — ${rupiah(p.price)}\n\nIs it still available?`)}" target="_blank" rel="noopener">Buy now via WhatsApp</a>
-                 <button class="btn btn--ghost" data-add="${p.id}">${bag.includes(p.id) ? "In your bag ✓" : "Add to bag"}</button>`}
-            <button class="btn btn--ghost pd__save${saved.has(p.id) ? " is-on" : ""}" data-save="${p.id}" aria-pressed="${saved.has(p.id)}">${heartSVG} Save</button>
-            ${p.sold ? "" : `<a class="btn btn--ghost" href="https://ig.me/m/${esc(S.instagram)}" target="_blank" rel="noopener">Make an offer</a>`}
+              ? `<a class="btn btn--dark" href="${wa(`Hi! I saw the sold ${p.brand} ${p.title} — do you have anything similar?`)}" target="_blank" rel="noopener">${esc(T("ui.similar_ask"))}</a>`
+              : `<a class="btn btn--dark magnetic" href="${wa(T("ui.pesan_beli").replace("{produk}", `${p.brand} — ${p.title} (Size ${p.size}) — ${rupiah(p.price)}`))}" target="_blank" rel="noopener">${esc(T("ui.buy"))}</a>
+                 <button class="btn btn--ghost" data-add="${p.id}">${esc(bag.includes(p.id) ? T("ui.inbag") : T("ui.add"))}</button>`}
+            <button class="btn btn--ghost pd__save${saved.has(p.id) ? " is-on" : ""}" data-save="${p.id}" aria-pressed="${saved.has(p.id)}">${heartSVG} ${esc(T("ui.save"))}</button>
+            ${p.sold ? "" : `<a class="btn btn--ghost" href="https://ig.me/m/${esc(S.instagram)}" target="_blank" rel="noopener">${esc(T("ui.offer"))}</a>`}
           </div>
           <div>
-            <details class="acc" open><summary>Description</summary><div class="acc__body">${esc(p.description)}<br /><br /><b>Condition:</b> ${p.condition}/10 — ${COND[p.condition] || ""}</div></details>
-            <details class="acc"><summary>Measurements</summary><div class="acc__body"><table class="measure">${Object.entries(p.measurements || {}).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join("")}</table><p class="muted small" style="margin-top:8px">Measured flat, in centimetres.</p></div></details>
-            <details class="acc"><summary>Shipping &amp; returns</summary><div class="acc__body">Ships from ${esc(S.city)} via JNE, J&amp;T or SiCepat. Paid before 3 PM ships same day. Because every piece is pre-owned and one of one, all sales are final — ask me anything before you buy.</div></details>
+            <details class="acc" open><summary>${esc(T("ui.desc"))}</summary><div class="acc__body">${esc(p.description)}<br /><br /><b>Condition:</b> ${p.condition}/10 — ${COND[p.condition] || ""}</div></details>
+            <details class="acc"><summary>${esc(T("ui.measure"))}</summary><div class="acc__body"><table class="measure">${Object.entries(p.measurements || {}).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join("")}</table><p class="muted small" style="margin-top:8px">${esc(T("ui.measure_note"))}</p></div></details>
+            <details class="acc"><summary>${esc(T("ui.shipping"))}</summary><div class="acc__body">${esc(T("ui.shipping_text").replace("{kota}", S.city))}</div></details>
           </div>
           <div class="pd__seller">
             <img src="assets/icons/icon-180.png" alt="" />
-            <div><strong>Gathan</strong>Usually replies within an hour</div>
+            <div><strong>${esc(T("penjual.nama"))}</strong>${esc(T("penjual.balas"))}</div>
           </div>
         </div>
-        ${similar.length ? `<div class="pd__similar"><h3>You might also like</h3><div class="grid">${similar.map(card).join("")}</div></div>` : ""}
+        ${similar.length ? `<div class="pd__similar"><h3>${esc(T("ui.similar"))}</h3><div class="grid">${similar.map(card).join("")}</div></div>` : ""}
       </div>`;
     modal.classList.add("is-open");
     modal.setAttribute("aria-hidden", "false");
@@ -693,12 +693,12 @@
 
   /* ---------- contact links ---------- */
   const igURL = `https://instagram.com/${S.instagram}`;
-  $("#sellLink").href = wa("Hi Lemari Gathan! I have some pieces I'd like to sell/consign. Here are the photos:");
+  $("#sellLink").href = wa(T("jual.pesan"));
   $("#igLink").href = igURL; $("#footIg").href = igURL;
   $("#waLink").href = wa("Hi Lemari Gathan!"); $("#footWa").href = wa("Hi Lemari Gathan!");
   $("#footMail").href = `mailto:${S.email}`;
   $("#footCity").textContent = S.city;
-  $("#year").textContent = new Date().getFullYear();
+  $("#copyright").textContent = T("footer.copyright").replace("{tahun}", new Date().getFullYear());
   const srcText = { sheet: "Inventory synced from Google Sheets", cache: "Showing last synced inventory (sheet unreachable)", file: "Showing built-in inventory" };
   $("#dataSource").textContent = "· " + srcText[DATA_SOURCE];
   $("#dataSource").dataset.src = DATA_SOURCE;
@@ -711,19 +711,20 @@
     const list = store.get("news", []);
     list.push(v); store.set("news", list);
     e.target.reset();
-    toast("You're on the list — see you Friday!");
+    toast(T("news.sukses"));
   });
 
   /* ---------- brand film (hero video) ---------- */
   function setupFilm() {
     const sec = $("#film"), v = $("#filmVideo");
-    if (!sec || !v) return;
+    if (!sec || !v || sec.dataset.off) return; // turned off in the sheet: don't download the video
     const conn = navigator.connection || {};
     const small = matchMedia("(max-width: 820px)").matches || conn.saveData || /2g/.test(conn.effectiveType || "");
-    v.src = small ? v.dataset.srcSd : v.dataset.srcHd;
+    v.src = (small && v.dataset.srcSd) || v.dataset.srcHd || v.dataset.srcSd;
 
     // "Shop Lot 704" opens the product if it's in the inventory
-    const lot = P.find((p) => /lot\s*704/i.test(p.title) && !p.sold);
+    const want = String(T("video.produk") || "").trim().toLowerCase();
+    const lot = want && P.find((p) => !p.sold && (String(p.id) === want || `${p.brand} ${p.title}`.toLowerCase().includes(want)));
     if (lot) { const a = $("#filmShop"); a.href = `#item-${lot.id}`; a.hidden = false; }
 
     let userPaused = reduce; // respect reduced motion: don't autoplay

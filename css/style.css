@@ -641,3 +641,5 @@ body.loaded .film__ui { opacity: 1; transform: none; transition-delay: 1.2s; }
   .film__shop { --h: 32px; padding: 0 12px; font-size: 12px; }
   .film__btn { width: 32px; height: 32px; }
 }
+/* sections switched off from the sheet */
+[data-off] { display: none !important; }
