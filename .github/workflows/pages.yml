@@ -21,7 +21,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Prepare site
         run: |
@@ -42,7 +42,7 @@ jobs:
           git add -A
           if ! git diff --cached --quiet; then git commit -m "Publish ${GITHUB_SHA::7}" && git push origin gh-pages; fi
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: /tmp/site
 
