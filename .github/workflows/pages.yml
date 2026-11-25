@@ -46,5 +46,10 @@ jobs:
         with:
           path: /tmp/site
 
+      # GitHub's artifact listing can lag a few seconds behind the upload;
+      # without this pause deploy-pages sometimes reports "No artifacts found".
+      - name: Wait for artifact to register
+        run: sleep 20
+
       - id: deployment
         uses: actions/deploy-pages@v4
