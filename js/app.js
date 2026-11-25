@@ -5,6 +5,36 @@
   "use strict";
 
   const S = window.STORE;
+
+  /* ---------- intro loader: progress + tilt (runs while data loads) ---------- */
+  const loaderUI = (() => {
+    const bar = document.getElementById("loaderBar"), pct = document.getElementById("loaderPct");
+    const sys = document.querySelector(".orbit__sys");
+    let p = 0, target = 0.86, done = false, active = true;
+    const tick = () => {
+      p += (target - p) * (done ? 0.18 : 0.035);
+      if (bar) bar.style.setProperty("--p", p.toFixed(3));
+      if (pct) pct.textContent = Math.round(p * 100) + "%";
+      if (!done || p < 0.995) requestAnimationFrame(tick);
+      else if (pct) pct.textContent = "100%";
+    };
+    requestAnimationFrame(tick);
+    const tilt = (x, y) => {
+      if (!active || !sys) return;
+      sys.style.setProperty("--mx", `${(-y * 22).toFixed(1)}deg`);
+      sys.style.setProperty("--my", `${(x * 28).toFixed(1)}deg`);
+    };
+    addEventListener("pointermove", (e) => tilt(e.clientX / innerWidth - 0.5, e.clientY / innerHeight - 0.5), { passive: true });
+    addEventListener("deviceorientation", (e) => {
+      if (e.gamma == null) return;
+      tilt(Math.max(-1, Math.min(1, e.gamma / 40)) / 2, Math.max(-1, Math.min(1, (e.beta - 40) / 40)) / 2);
+    });
+    return {
+      step: (v) => { target = Math.max(target, v); },
+      finish: () => { done = true; target = 1; active = false; },
+    };
+  })();
+
   const [{ products: P, source: DATA_SOURCE }] = await Promise.all([window.loadProducts(), window.loadSite()]);
   document.documentElement.dataset.source = DATA_SOURCE;
   // Price slider ceiling follows the most expensive item (rounded up to the next Rp500k)
@@ -765,6 +795,14 @@
     sync();
   }
 
+  /* ---------- shared with js/checkout.js ---------- */
+  window.LG = {
+    products: P, byId, rupiah, wa, toast, esc, media, store,
+    bagItems: () => bag.map(byId).filter((p) => p && !p.sold),
+    clearBag: () => { bag = []; store.set("bag", bag); updateBadges(); renderDrawer(); },
+    closeDrawer,
+  };
+
   /* ---------- boot ---------- */
   $$(".loader__word span").forEach((s, i) => s.style.setProperty("--i", i));
   Object.assign($("#fPrice"), { max: PRICE_MAX, value: PRICE_MAX, step: PRICE_MAX > 5e6 ? 100000 : 50000 });
@@ -775,7 +813,9 @@
   bindMagnetic();
   setupFilm();
 
+  loaderUI.step(0.94);
   const finishLoad = () => {
+    loaderUI.finish();
     document.body.classList.add("loaded");
     document.body.classList.remove("is-loading");
     setTimeout(runCounters, 1100);

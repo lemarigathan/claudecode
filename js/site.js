@@ -160,6 +160,30 @@
     ["ui.ship_note", "Halaman produk & keranjang", "Catatan ongkir di keranjang", "text", ""],
     ["ui.pesan_beli", "Halaman produk & keranjang", "Pesan WA beli 1 produk", "js", "{produk} diganti nama produk, ukuran & harga."],
     ["ui.pesan_checkout", "Halaman produk & keranjang", "Pesan WA checkout (pembuka)", "js", "Daftar produk & total ditambahkan otomatis."],
+
+    // ---- Pembayaran & ongkir ----
+    ["bayar.qris", "Pembayaran & ongkir", "QRIS: link gambar QR", "js", "Link gambar QRIS statis dari bank/e-wallet kamu (Google Drive boleh). Kosong = QRIS tidak tampil."],
+    ["bayar.qris_nama", "Pembayaran & ongkir", "QRIS: nama merchant", "js", "Nama yang muncul saat pembeli scan."],
+    ["bayar.bank", "Pembayaran & ongkir", "Transfer bank", "js", "Satu rekening per baris: Bank | Nomor | Atas nama. Kosong = tidak tampil."],
+    ["bayar.ewallet", "Pembayaran & ongkir", "E-wallet", "js", "Satu per baris: DANA / OVO / GoPay / ShopeePay | Nomor | Atas nama. Kosong = tidak tampil."],
+    ["bayar.paypal_id", "Pembayaran & ongkir", "PayPal: Client ID", "js", "Dari developer.paypal.com → Apps & Credentials (Live). Kosong = PayPal tidak tampil."],
+    ["bayar.paypal_kurs", "Pembayaran & ongkir", "PayPal: kurs (Rp per 1 USD)", "js", "PayPal tidak menerima Rupiah, jadi total dikonversi ke USD dengan kurs ini."],
+    ["bayar.wa", "Pembayaran & ongkir", "Tampilkan opsi bayar via chat WhatsApp?", "js", "Ya / Tidak"],
+    ["ongkir.zona", "Pembayaran & ongkir", "Zona & ongkir", "js", "Satu zona per baris: Nama zona | ongkir. 0 = gratis. Kosong = ongkir dikonfirmasi lewat chat."],
+    ["ongkir.catatan", "Pembayaran & ongkir", "Catatan ongkir", "js", ""],
+    ["pesanan.webhook", "Pembayaran & ongkir", "Link penyimpan pesanan (opsional)", "js", "URL Web App Google Apps Script agar data pendaftaran & pesanan tersimpan di sheet PRIBADI. Lihat tab Panduan."],
+
+    // ---- Akun & checkout ----
+    ["akun.judul", "Akun & checkout", "Judul daftar/akun", "js", ""],
+    ["akun.teks", "Akun & checkout", "Teks di form daftar", "js", ""],
+    ["checkout.langkah1", "Akun & checkout", "Langkah 1", "js", ""],
+    ["checkout.langkah2", "Akun & checkout", "Langkah 2", "js", ""],
+    ["checkout.langkah3", "Akun & checkout", "Langkah 3", "js", ""],
+    ["checkout.tombol_lanjut", "Akun & checkout", "Tombol lanjut ke pembayaran", "js", ""],
+    ["checkout.tombol_pesan", "Akun & checkout", "Tombol buat pesanan", "js", ""],
+    ["checkout.sukses_judul", "Akun & checkout", "Judul setelah pesan", "js", "{kode} diganti nomor pesanan."],
+    ["checkout.sukses_teks", "Akun & checkout", "Teks setelah pesan", "js", ""],
+    ["checkout.pesan_wa", "Akun & checkout", "Pesan WA konfirmasi pesanan", "js", "Detail pesanan, data pembeli & total ditambahkan otomatis di bawahnya."],
   ];
 
   /* ---------- helpers ---------- */
@@ -207,6 +231,26 @@
     "ui.similar": "You might also like",
     "ui.pesan_beli": "Hi Lemari Gathan! I want to buy:\n{produk}\n\nIs it still available?",
     "ui.pesan_checkout": "Hi Lemari Gathan! I'd like to order:",
+    "bayar.qris": "",
+    "bayar.qris_nama": "Lemari Gathan",
+    "bayar.bank": "",
+    "bayar.ewallet": "",
+    "bayar.paypal_id": "",
+    "bayar.paypal_kurs": "16000",
+    "bayar.wa": "Ya",
+    "ongkir.zona": "Medan | 0\nSumatera Utara | 20000\nPulau Sumatera | 35000\nJawa & Bali | 45000\nLainnya | 60000",
+    "ongkir.catatan": "Shipped with JNE / J&T / SiCepat. Paid before 3 PM ships same day.",
+    "pesanan.webhook": "",
+    "akun.judul": "Your details",
+    "akun.teks": "Sign up once and we'll remember your details for next time. We only use them to ship your order.",
+    "checkout.langkah1": "Details",
+    "checkout.langkah2": "Payment",
+    "checkout.langkah3": "Done",
+    "checkout.tombol_lanjut": "Continue to payment",
+    "checkout.tombol_pesan": "Place order",
+    "checkout.sukses_judul": "Order {kode} placed!",
+    "checkout.sukses_teks": "Complete the payment below, then send us the proof on WhatsApp. Your pieces are held for 24 hours.",
+    "checkout.pesan_wa": "Hi Lemari Gathan! I just placed an order on the website.",
   };
 
   const values = {}; // key -> value from the sheet (non-empty only)
