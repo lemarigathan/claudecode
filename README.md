@@ -55,6 +55,22 @@ Notes:
 - Anyone can see the published sheet, so keep private info (buyer details, costs) in a **separate tab** and only publish the product tab.
 - If the sheet can't be reached, the site shows the last copy of the sheet saved in that browser, or the `PRODUCTS` list in `js/products.js` if there's no copy.
 
+## Sign-up, checkout & payments
+Checkout (`js/checkout.js`) has three steps:
+1. **Details (sign up):** name, WhatsApp, email, address and shipping zone. These are remembered on the customer's device, and the header shows their initial. Tapping it opens their details and past orders.
+2. **Payment:** QRIS, bank transfer, e-wallet, PayPal or WhatsApp chat. A method only shows once it's filled in on the Pengaturan tab:
+   - `bayar.qris`: link to your static QRIS image
+   - `bayar.bank` / `bayar.ewallet`: one account per line, `Bank | Number | Name`
+   - `bayar.paypal_id`: PayPal **Live** Client ID. PayPal doesn't take IDR, so totals are converted to USD with `bayar.paypal_kurs`
+   - `ongkir.zona`: shipping zones, `Zone | cost` per line
+3. **Done:** an order code (e.g. `LG-261125-1234`), the amount and account numbers with copy buttons, and a WhatsApp button that sends the full order for payment proof.
+
+QRIS, transfers and e-wallets are checked by hand: ship once the money arrives, then mark the item Terjual. PayPal payments are captured on the spot.
+
+**Saving sign-ups and orders (optional):** follow `tools/orders-apps-script.gs` to create a *private* Google Sheet with a small Apps Script web app, then paste its URL in `pesanan.webhook`. Every sign-up and order is added to it as a row, with an optional email alert. Never collect customer data in the public backend sheet.
+
+Accounts live on the customer's device; there are no passwords or server-side logins. Real logins would need an auth service such as Firebase or Supabase.
+
 ## Hero video
 The brand film at the top of the page lives in `assets/video/`. Desktop gets `lot704-1080.mp4`, phones and data-saver users get `lot704-720.mp4`, and `lot704-poster.jpg` shows while it loads. It plays muted and on a loop, pauses when scrolled off screen, and doesn't autoplay for visitors who've turned on reduced motion. The **Shop Lot 704** button links to the inventory item whose name contains "Lot 704", and is hidden if that item is missing or sold.
 

@@ -180,12 +180,13 @@
 
   /* JSONP via Google's gviz endpoint. Loaded as a <script>, so it isn't
      subject to cross-origin (CORS) restrictions the way fetch() is. */
+  let jsonpSeq = 0; // unique callback names: products and settings load at the same moment
   function sheetJSONP(url, tab) {
     const id = (url.match(/docs\.google\.com\/spreadsheets\/d\/([\w-]{20,})/) || [])[1];
     if (!id || /\/d\/e\//.test(url)) return Promise.reject(new Error("Not a regular sheet link"));
     const gid = (url.match(/[#&?]gid=(\d+)/) || [])[1];
     return new Promise((resolve, reject) => {
-      const cb = "__lgSheet" + Date.now();
+      const cb = "__lgSheet" + Date.now() + "_" + (++jsonpSeq) + Math.floor(Math.random() * 1e6);
       const s = document.createElement("script");
       const done = (fn, arg) => { clearTimeout(t); delete window[cb]; s.remove(); fn(arg); };
       const t = setTimeout(() => done(reject, new Error("Timed out loading the sheet")), TIMEOUT);
