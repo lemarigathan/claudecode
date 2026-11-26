@@ -59,7 +59,7 @@
 
   /* ---------- webhook (optional, private sheet via Apps Script) ---------- */
   function send(type, data) {
-    const url = String(T("pesanan.webhook", "") || "").trim();
+    const url = String(T("pesanan.webhook", "") || (window.STORE || {}).backend || "").trim();
     if (!/^https:\/\/script\.google(usercontent)?\.com\//.test(url)) return;
     try {
       fetch(url, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ type, ...data, page: location.href, at: new Date().toISOString() }) });
@@ -427,7 +427,7 @@
   }
 
   /* ---------- live order status (needs the Apps Script inbox) ---------- */
-  const webhook = () => { const u = String(T("pesanan.webhook", "") || "").trim(); return /^https:\/\/script\.google(usercontent)?\.com\//.test(u) ? u : ""; };
+  const webhook = () => { const u = String(T("pesanan.webhook", "") || (window.STORE || {}).backend || "").trim(); return /^https:\/\/script\.google(usercontent)?\.com\//.test(u) ? u : ""; };
   const STATUS_TEXT = {
     "Menunggu pembayaran": ["wait", "Waiting for payment confirmation", "We'll email you the moment your payment is confirmed."],
     "Lunas": ["ok", "Payment received", "A confirmation email is on its way. We're packing your order."],

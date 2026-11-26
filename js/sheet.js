@@ -252,8 +252,38 @@
     throw new Error(errors.join(" | "));
   }
 
+  /* The Apps Script backend (STORE.backend) serves the Produk + Pengaturan tabs, so the
+     spreadsheet can stay private. One request is shared by products and settings. */
+  let backendReq = null;
+  window.fetchBackend = function () {
+    const url = String((window.STORE && window.STORE.backend) || "").trim();
+    if (!/^https:\/\/script\.google(usercontent)?\.com\//.test(url)) return Promise.reject(new Error("No backend URL"));
+    if (backendReq) return backendReq;
+    backendReq = new Promise((resolve, reject) => {
+      const cb = "__lgData" + Date.now() + "_" + (++jsonpSeq);
+      const s = document.createElement("script");
+      const done = (fn, arg) => { clearTimeout(t); delete window[cb]; s.parentNode && s.parentNode.removeChild(s); fn(arg); };
+      const t = setTimeout(() => done(reject, new Error("Backend timed out")), TIMEOUT + 4000);
+      window[cb] = (res) => (res && res.ok && Array.isArray(res.produk) ? done(resolve, res) : done(reject, new Error((res && res.error) || "Backend returned no data")));
+      s.onerror = () => done(reject, new Error("Backend could not be reached"));
+      s.src = `${url}?action=data&callback=${cb}&_=${Date.now()}`;
+      document.head.appendChild(s);
+    });
+    backendReq.catch(() => { backendReq = null; });
+    return backendReq;
+  };
+
   window.loadProducts = async function () {
     const url = (window.STORE && window.STORE.sheetCSV || "").trim();
+    if ((window.STORE || {}).backend) {
+      try {
+        const products = toProducts((await window.fetchBackend()).produk);
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify(products)); } catch {}
+        return { products, source: "sheet" };
+      } catch (err) {
+        console.warn("[Lemari Gathan] Backend:", err.message, "- trying the public sheet link");
+      }
+    }
     if (!url) return { products: window.PRODUCTS || [], source: "file" };
     try {
       const products = await fetchSheet(url);
