@@ -171,7 +171,8 @@
     ["bayar.paypal_id", "Pembayaran & ongkir", "PayPal: Client ID", "js", "Dari developer.paypal.com → Apps & Credentials (Live). Kosong = PayPal tidak tampil."],
     ["bayar.paypal_kurs", "Pembayaran & ongkir", "PayPal: kurs (Rp per 1 USD)", "js", "PayPal tidak menerima Rupiah, jadi total dikonversi ke USD dengan kurs ini."],
     ["bayar.wa", "Pembayaran & ongkir", "Tampilkan opsi bayar via chat WhatsApp?", "js", "Ya / Tidak"],
-    ["ongkir.zona", "Pembayaran & ongkir", "Zona & ongkir", "js", "Satu zona per baris: Nama zona | ongkir. 0 = gratis. Kosong = ongkir dikonfirmasi lewat chat."],
+    ["ongkir.provinsi", "Pembayaran & ongkir", "Ongkir per provinsi", "js", "Satu provinsi per baris: Pulau | Provinsi | ongkir. 0 = gratis. Pembeli memilih provinsi saat checkout."],
+    ["ongkir.zona", "Pembayaran & ongkir", "Zona & ongkir (lama)", "js", "Satu zona per baris: Nama zona | ongkir. 0 = gratis. Kosong = ongkir dikonfirmasi lewat chat."],
     ["ongkir.catatan", "Pembayaran & ongkir", "Catatan ongkir", "js", ""],
     ["pesanan.webhook", "Pembayaran & ongkir", "Link penyimpan pesanan (opsional)", "js", "URL Web App Google Apps Script agar data pendaftaran & pesanan tersimpan di sheet PRIBADI. Lihat tab Panduan."],
 
@@ -219,7 +220,7 @@
     "news.sukses": "You're on the list — see you Friday!",
     "footer.copyright": "© {tahun} Lemari Gathan. All items are pre-owned.",
     "ui.quick": "Quick view",
-    "ui.buy": "Buy now via WhatsApp",
+    "ui.buy": "Buy now",
     "ui.add": "Add to bag",
     "ui.inbag": "In your bag ✓",
     "ui.save": "Save",
@@ -233,7 +234,7 @@
     "ui.similar": "You might also like",
     "ui.pesan_beli": "Hi Lemari Gathan! I want to buy:\n{produk}\n\nIs it still available?",
     "ui.pesan_checkout": "Hi Lemari Gathan! I'd like to order:",
-    "bayar.qris": "assets/img/qris-gopay.jpg",
+    "bayar.qris": "assets/img/qris-gopay.webp",
     "bayar.qris_nama": "GATHAN KIEVLAN KHELKAL RA",
     "bayar.qris_payload": "00020101021126610014COM.GO-JEK.WWW01189360091438780668910210G8780668910303UMI51440014ID.CO.QRIS.WWW0215ID10264831574870303UMI5204569753033605802ID5925GATHAN KIEVLAN KHELKAL RA6005MEDAN61052012762070703A01630426A1",
     "bayar.kode_unik": "Ya",
@@ -241,8 +242,9 @@
     "bayar.ewallet": "",
     "bayar.paypal_id": "",
     "bayar.paypal_kurs": "16000",
-    "bayar.wa": "Ya",
+    "bayar.wa": "Tidak",
     "ongkir.zona": "Medan | 0\nSumatera Utara | 20000\nPulau Sumatera | 35000\nJawa & Bali | 45000\nLainnya | 60000",
+    "ongkir.provinsi": "Sumatera | Sumatera Utara — Kota Medan | 0\nSumatera | Sumatera Utara — luar Medan | 15000\nSumatera | Aceh | 20000\nSumatera | Sumatera Barat | 22000\nSumatera | Riau | 22000\nSumatera | Kepulauan Riau | 28000\nSumatera | Jambi | 25000\nSumatera | Bengkulu | 30000\nSumatera | Sumatera Selatan | 28000\nSumatera | Kepulauan Bangka Belitung | 35000\nSumatera | Lampung | 30000\nJawa | DKI Jakarta | 32000\nJawa | Banten | 35000\nJawa | Jawa Barat | 35000\nJawa | Jawa Tengah | 38000\nJawa | DI Yogyakarta | 38000\nJawa | Jawa Timur | 40000\nBali & Nusa Tenggara | Bali | 45000\nBali & Nusa Tenggara | Nusa Tenggara Barat | 50000\nBali & Nusa Tenggara | Nusa Tenggara Timur | 60000\nKalimantan | Kalimantan Barat | 50000\nKalimantan | Kalimantan Tengah | 55000\nKalimantan | Kalimantan Selatan | 50000\nKalimantan | Kalimantan Timur | 55000\nKalimantan | Kalimantan Utara | 65000\nSulawesi | Sulawesi Utara | 60000\nSulawesi | Gorontalo | 65000\nSulawesi | Sulawesi Tengah | 65000\nSulawesi | Sulawesi Barat | 65000\nSulawesi | Sulawesi Selatan | 55000\nSulawesi | Sulawesi Tenggara | 65000\nMaluku | Maluku | 75000\nMaluku | Maluku Utara | 75000\nPapua | Papua | 95000\nPapua | Papua Barat | 90000\nPapua | Papua Barat Daya | 95000\nPapua | Papua Tengah | 100000\nPapua | Papua Pegunungan | 110000\nPapua | Papua Selatan | 100000",
     "ongkir.catatan": "Shipped with JNE / J&T / SiCepat. Paid before 3 PM ships same day.",
     "pesanan.webhook": "",
     "akun.judul": "Your details",
@@ -253,7 +255,7 @@
     "checkout.tombol_lanjut": "Continue to payment",
     "checkout.tombol_pesan": "Place order",
     "checkout.sukses_judul": "Order {kode} placed!",
-    "checkout.sukses_teks": "Complete the payment below, then send us the proof on WhatsApp. Your pieces are held for 24 hours.",
+    "checkout.sukses_teks": "Complete the payment below. We'll email you as soon as it's confirmed — no need to send proof. Your pieces are held for 24 hours.",
     "checkout.pesan_wa": "Hi Lemari Gathan! I just placed an order on the website.",
   };
 
@@ -319,6 +321,17 @@
     });
   }
 
+  // Old built-in texts that were copied into the sheet. If a cell still holds one of
+  // these exactly, the newer built-in text is used; anything the owner wrote is kept.
+  const LEGACY = {
+    "ui.buy": ["Buy now via WhatsApp"],
+    "ui.checkout": ["Checkout via WhatsApp"],
+    "ui.ship_note": ["Shipping is calculated in chat based on your city."],
+    "checkout.sukses_teks": ["Complete the payment below, then send us the proof on WhatsApp. Your pieces are held for 24 hours."],
+    "bayar.wa": ["Ya"],
+    "video.poster": ["assets/video/lot704-poster.jpg"],
+    "ongkir.zona": ["Medan | 0\nSumatera Utara | 20000\nPulau Sumatera | 35000\nJawa & Bali | 45000\nLainnya | 60000"],
+  };
   function parse(rows) {
     if (!rows || rows.length < 2) throw new Error("Settings tab is empty");
     const head = rows[0].map((h) => String(h).trim().toLowerCase());
@@ -328,7 +341,8 @@
     const out = {};
     rows.slice(1).forEach((r) => {
       const key = String(r[k] || "").trim(), val = String(r[v] == null ? "" : r[v]);
-      if (key && val.trim() !== "") out[key] = val.replace(/\r\n/g, "\n").trim();
+      const clean = val.replace(/\r\n/g, "\n").trim();
+      if (key && clean !== "" && !(LEGACY[key] || []).includes(clean)) out[key] = clean;
     });
     return out;
   }
@@ -338,10 +352,29 @@
     const url = (window.STORE && window.STORE.sheetCSV || "").trim();
     let data = null, source = "file";
     if ((window.STORE || {}).backend && window.fetchBackend) {
+      const fresh = window.fetchBackend().then((d) => {
+        const parsed = parse(d.pengaturan);
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify(parsed)); } catch {}
+        return parsed;
+      });
+      let cached = null;
+      try { cached = JSON.parse(localStorage.getItem(CACHE_KEY)); } catch {}
+      if (!cached && window.__LG_SNAPSHOT) { try { cached = parse(window.__LG_SNAPSHOT.pengaturan); } catch {} }
       try {
-        data = parse((await window.fetchBackend()).pengaturan);
-        source = "sheet";
-        try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch {}
+        if (cached && typeof cached === "object") {
+          const quick = await Promise.race([fresh, new Promise((r) => setTimeout(() => r(null), 900))]);
+          if (quick) { data = quick; source = "sheet"; }
+          else {
+            data = cached; source = "cache";
+            // apply whatever changed once the fresh settings arrive
+            fresh.then((nd) => {
+              Object.assign(values, nd);
+              for (const f of FIELDS) if (nd[f[0]] != null && nd[f[0]] !== cached[f[0]]) { try { applyField(f, nd[f[0]]); } catch {} }
+            }).catch(() => {});
+          }
+        } else {
+          data = await fresh; source = "sheet";
+        }
       } catch (err) {
         console.warn("[Lemari Gathan] Backend settings:", err.message);
       }

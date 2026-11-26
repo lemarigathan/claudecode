@@ -478,7 +478,7 @@
     $("#bagTotal").textContent = rupiah(total);
     const msg = T("ui.pesan_checkout") + "\n\n" + list.map((p, i) => `${i + 1}. ${p.brand} — ${p.title} (Size ${p.size}) — ${rupiah(p.price)}`).join("\n") +
       `\n\nSubtotal: ${rupiah(total)}\n\nMy city: `;
-    $("#checkoutBtn").href = wa(msg);
+    $("#checkoutBtn").dataset.msg = msg; // checkout itself happens in js/checkout.js
   }
   drawer.addEventListener("click", (e) => {
     const t = e.target;
@@ -549,7 +549,7 @@
           <div class="pd__actions">
             ${p.sold
               ? `<a class="btn btn--dark" href="${wa(`Hi! I saw the sold ${p.brand} ${p.title} — do you have anything similar?`)}" target="_blank" rel="noopener">${esc(T("ui.similar_ask"))}</a>`
-              : `<a class="btn btn--dark magnetic" href="${wa(T("ui.pesan_beli").replace("{produk}", `${p.brand} — ${p.title} (Size ${p.size}) — ${rupiah(p.price)}`))}" target="_blank" rel="noopener">${esc(T("ui.buy"))}</a>
+              : `<button class="btn btn--dark magnetic" data-buynow="${p.id}">${esc(T("ui.buy"))}</button>
                  <button class="btn btn--ghost" data-add="${p.id}">${esc(bag.includes(p.id) ? T("ui.inbag") : T("ui.add"))}</button>`}
             <button class="btn btn--ghost pd__save${saved.has(p.id) ? " is-on" : ""}" data-save="${p.id}" aria-pressed="${saved.has(p.id)}">${heartSVG} ${esc(T("ui.save"))}</button>
             ${p.sold ? "" : `<a class="btn btn--ghost" href="https://ig.me/m/${esc(S.instagram)}" target="_blank" rel="noopener">${esc(T("ui.offer"))}</a>`}
@@ -630,6 +630,15 @@
   document.addEventListener("click", (e) => {
     const s = e.target.closest("[data-save]");
     if (s) { e.preventDefault(); e.stopPropagation(); return toggleSave(s.dataset.save, s); }
+    const bn = e.target.closest("[data-buynow]");
+    if (bn) {
+      e.preventDefault();
+      const id = +bn.dataset.buynow;
+      if (!bag.includes(id)) { bag.push(id); store.set("bag", bag); updateBadges("bag"); }
+      closeModal();
+      setTimeout(() => (window.openCheckout ? window.openCheckout() : openDrawer("bag")), 250);
+      return;
+    }
     const a = e.target.closest("[data-add]");
     if (a) { e.preventDefault(); return addToBag(a.dataset.add); }
     if (e.target.closest(".drawer")) return;
@@ -729,9 +738,21 @@
   $("#footMail").href = `mailto:${S.email}`;
   $("#footCity").textContent = S.city;
   $("#copyright").textContent = T("footer.copyright").replace("{tahun}", new Date().getFullYear());
-  const srcText = { sheet: "Inventory synced from Google Sheets", cache: "Showing last synced inventory (sheet unreachable)", file: "Showing built-in inventory" };
-  $("#dataSource").textContent = "· " + srcText[DATA_SOURCE];
-  $("#dataSource").dataset.src = DATA_SOURCE;
+  const srcText = { sheet: "Inventory synced from Google Sheets", "cache-fresh": "Updating inventory…", cache: "Showing last synced inventory (sheet unreachable)", file: "Showing built-in inventory" };
+  const setSource = (src) => { $("#dataSource").textContent = "· " + srcText[src]; $("#dataSource").dataset.src = src === "cache-fresh" ? "cache" : src; };
+  setSource(DATA_SOURCE);
+  // the saved copy was shown first; swap in the fresh products when they arrive
+  window.__lgRefreshProducts = (fresh) => {
+    const changed = JSON.stringify(fresh) !== JSON.stringify(P);
+    if (changed) {
+      P.splice(0, P.length, ...fresh);
+      bag = bag.filter((id) => byId(id) && !byId(id).sold);
+      store.set("bag", bag);
+      buildFilters(); render(); updateBadges();
+      $("#liveCount").textContent = `${P.filter((p) => !p.sold).length} pieces available`;
+    }
+    setSource("sheet");
+  };
   const liveN = P.filter((p) => !p.sold).length;
   $("#liveCount").textContent = `${liveN} pieces available`;
 
@@ -749,8 +770,17 @@
     const sec = $("#film"), v = $("#filmVideo");
     if (!sec || !v || sec.dataset.off) return; // turned off in the sheet: don't download the video
     const conn = navigator.connection || {};
-    const small = matchMedia("(max-width: 820px)").matches || conn.saveData || /2g/.test(conn.effectiveType || "");
-    v.src = (small && v.dataset.srcSd) || v.dataset.srcHd || v.dataset.srcSd;
+    const slow = conn.saveData || /(^|-)(2g|3g)$/.test(conn.effectiveType || "");
+    const big = (screen.width || innerWidth) * Math.min(devicePixelRatio || 1, 2) > 2000 && innerWidth > 1100;
+    const pick = (slow && v.dataset.srcLow) || (big && v.dataset.srcHd) || v.dataset.srcSd || v.dataset.srcHd;
+    // the video starts downloading after the page has shown, so it never slows the first view
+    let loaded = false;
+    const loadVideo = () => { if (!loaded) { loaded = true; v.preload = "auto"; v.src = pick; } };
+    let visible = false;
+    window.__lgLoadVideo = () => {
+      const go = () => { loadVideo(); if (visible && !userPaused) play(); };
+      if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 1200 }); else setTimeout(go, 300);
+    };
 
     // "Shop Lot 704" opens the product if it's in the inventory
     const want = String(T("video.produk") || "").trim().toLowerCase();
@@ -765,7 +795,7 @@
       $("#filmSound").setAttribute("aria-label", v.muted ? "Turn sound on" : "Turn sound off");
       $("#filmSound").setAttribute("aria-pressed", String(!v.muted));
     };
-    const play = () => v.play().catch(() => { sec.classList.add("is-paused"); });
+    const play = () => { loadVideo(); return v.play().catch(() => { sec.classList.add("is-paused"); }); };
     ["play", "pause", "volumechange"].forEach((ev) => v.addEventListener(ev, sync));
     $("#filmPlay").addEventListener("click", () => {
       if (v.paused) { userPaused = false; play(); } else { userPaused = true; v.pause(); }
@@ -786,6 +816,8 @@
 
     // only play while on screen (saves battery); never fight a manual pause
     new IntersectionObserver(([en]) => {
+      visible = en.isIntersecting;
+      if (!loaded) return; // waits for the page to finish loading first
       if (en.isIntersecting && !userPaused) play();
       else if (!en.isIntersecting && !v.paused) v.pause();
     }, { threshold: 0.25 }).observe(sec);
@@ -817,14 +849,20 @@
   const finishLoad = () => {
     loaderUI.finish();
     document.body.classList.add("loaded");
+    window.__lgLoadVideo && window.__lgLoadVideo();
     document.body.classList.remove("is-loading");
     setTimeout(runCounters, 1100);
     setTimeout(() => { document.body.classList.add("settled"); $(".loader")?.remove(); }, 2600);
     routeFromHash();
     moveInk();
   };
-  const minDelay = reduce ? 0 : 1300;
+  // the full intro plays on the first visit; returning visitors get a quick one
+  const seenIntro = store.get("intro", false);
+  store.set("intro", true);
+  const minDelay = reduce ? 0 : seenIntro ? 450 : 1300;
   const t0 = performance.now();
   const go = () => setTimeout(finishLoad, Math.max(0, minDelay - (performance.now() - t0)));
-  if (document.readyState === "complete") go(); else addEventListener("load", go, { once: true });
+  // Don't wait for the window "load" event: it also waits for the backend request and
+  // the video. The data this page needs is already in hand at this point.
+  if (document.readyState !== "loading") go(); else addEventListener("DOMContentLoaded", go, { once: true });
 })();

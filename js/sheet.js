@@ -31,6 +31,7 @@
 
   const CACHE_KEY = "lg:sheet-cache";
   const TIMEOUT = 8000;
+  const FAST_MS = 900; // how long a returning visitor waits for fresh data before the saved copy is shown
 
   /* RFC 4180 CSV parser: handles quotes, escaped quotes, commas and newlines in cells */
   function parseCSV(text) {
@@ -273,13 +274,32 @@
     return backendReq;
   };
 
+  if ((window.STORE || {}).backend) window.fetchBackend().catch(() => {});
+
   window.loadProducts = async function () {
     const url = (window.STORE && window.STORE.sheetCSV || "").trim();
     if ((window.STORE || {}).backend) {
-      try {
-        const products = toProducts((await window.fetchBackend()).produk);
+      const fresh = window.fetchBackend().then((d) => {
+        const products = toProducts(d.produk);
         try { localStorage.setItem(CACHE_KEY, JSON.stringify(products)); } catch {}
-        return { products, source: "sheet" };
+        return products;
+      });
+      // Returning visitors: show the copy saved on this device straight away if the
+      // backend takes longer than a moment, then swap in the fresh data when it arrives.
+      let cached = null;
+      try { cached = JSON.parse(localStorage.getItem(CACHE_KEY)); } catch {}
+      // first visit on this device: use the copy built into the site on deploy
+      if (!(Array.isArray(cached) && cached.length) && window.__LG_SNAPSHOT) {
+        try { cached = toProducts(window.__LG_SNAPSHOT.produk); } catch {}
+      }
+      try {
+        if (Array.isArray(cached) && cached.length) {
+          const quick = await Promise.race([fresh, new Promise((r) => setTimeout(() => r(null), FAST_MS))]);
+          if (quick) return { products: quick, source: "sheet" };
+          fresh.then((p) => window.__lgRefreshProducts && window.__lgRefreshProducts(p)).catch(() => {});
+          return { products: cached, source: "cache-fresh" };
+        }
+        return { products: await fresh, source: "sheet" };
       } catch (err) {
         console.warn("[Lemari Gathan] Backend:", err.message, "- trying the public sheet link");
       }
