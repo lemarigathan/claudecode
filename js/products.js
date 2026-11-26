@@ -34,7 +34,7 @@ window.STORE = {
   // Apps Script web app (tools/orders-apps-script.gs). When set, the website reads
   // products + settings through it and sends orders to it, so the spreadsheet can
   // be Restricted (private). sheetCSV above is only a fallback.
-  backend: "",
+  backend: "https://script.google.com/macros/s/AKfycbxO1sUowN2W0B5ozluZPCGiqEW3UQsfIb6_qfTmdSnHepJjwX3YkKYaDBmHr2BATaw6fw/exec",
 };
 
 window.PRODUCTS = [
