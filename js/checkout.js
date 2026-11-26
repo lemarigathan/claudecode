@@ -86,8 +86,14 @@
     </section>`;
   document.body.appendChild(root);
 
+  function refreshOrderStatuses() {
+    const orders = store.get("orders", []).filter((o) => o.email && !["Selesai", "Dibatalkan"].includes(o.status)).slice(-5);
+    Promise.all(orders.map((o) => lookup(o.code, o.email).then((res) => res && res.status && rememberStatus(o.code, res.status, res.resi))))
+      .then(() => { if (mode === "account" && root.classList.contains("is-open")) renderSummary(); });
+  }
   function open(m) {
     mode = m;
+    if (m === "account") setTimeout(refreshOrderStatuses, 300);
     items = window.LG ? window.LG.bagItems() : [];
     if (mode === "checkout" && !items.length) { window.LG && window.LG.toast("Your bag is empty"); return; }
     step = 1; method = null; order = null;
@@ -125,6 +131,7 @@
     else main.innerHTML = step === 1 ? detailsView() : step === 2 ? paymentView() : doneView();
     renderSummary();
     if (step === 2 && method === "paypal") mountPayPal();
+    if (step === 3) setTimeout(pollStatus, 8000);
     const first = main.querySelector("input:not([type=hidden]), button");
     if (first && step === 1 && !profile()) setTimeout(() => first.focus({ preventScroll: true }), 300);
   }
@@ -134,7 +141,8 @@
     if (mode === "account") {
       const orders = store.get("orders", []);
       el.innerHTML = `<h3>Your orders</h3>${orders.length ? orders.slice().reverse().map((o) => `
-        <div class="co__order"><div><strong>${esc(o.code)}</strong><small>${new Date(o.at).toLocaleDateString("id-ID")} · ${esc(o.methodLabel)}</small></div><span>${rp(o.total)}</span></div>`).join("")
+        <div class="co__order"><div><strong>${esc(o.code)}</strong><small>${new Date(o.at).toLocaleDateString("id-ID")} · ${esc(o.methodLabel)}</small>
+          ${o.status && o.methodLabel !== "Pay via WhatsApp chat" ? `<em class="co__tag co__tag--${(STATUS_TEXT[o.status] || ["wait"])[0]}">${esc((STATUS_TEXT[o.status] || [0, o.status])[1])}</em>` : ""}</div><span>${rp(o.total)}</span></div>`).join("")
         : `<p class="muted small">No orders yet. Orders you place on this device show up here.</p>`}`;
       return;
     }
@@ -148,6 +156,7 @@
       <dl class="co__totals">
         <div><dt>Subtotal</dt><dd>${rp(order ? order.subtotal : t.sub)}</dd></div>
         <div><dt>Shipping${t.zone ? ` <small>(${esc(t.zone.name)})</small>` : ""}</dt><dd>${(order ? order.shipping : t.ship) == null ? "Confirmed in chat" : (order ? order.shipping : t.ship) === 0 ? "Free" : rp(order ? order.shipping : t.ship)}</dd></div>
+        ${order && order.unique ? `<div><dt>Unique code <small>(to match your payment)</small></dt><dd>${rp(order.unique)}</dd></div>` : ""}
         <div class="co__grand"><dt>Total</dt><dd>${rp(order ? order.total : t.total)}</dd></div>
       </dl>
       <p class="muted small">${esc(T("ongkir.catatan", ""))}</p>`;
@@ -254,6 +263,7 @@
     const m = t.closest("[data-method]");
     if (m) { method = m.dataset.method; render(); return; }
     if (t.closest("[data-co-place]")) { placeOrder(); return; }
+    if (t.closest("[data-co-saveqr]")) { saveQR(); return; }
     const c = t.closest("[data-copy]");
     if (c) {
       const txt = c.dataset.copy;
@@ -283,7 +293,8 @@
         </div>
         <div class="co__actions"><button class="btn btn--ghost" data-co-back>Back</button></div>`
       : `<div class="co__actions"><button class="btn btn--ghost" data-co-back>Back</button>
-          <button class="btn btn--dark" data-co-place>${esc(T("checkout.tombol_pesan", "Place order"))} · ${rp(t.total)}</button></div>`}`;
+          <button class="btn btn--dark" data-co-place>${esc(T("checkout.tombol_pesan", "Place order"))} · ${rp(t.total)}</button></div>
+        ${["qris", "bank", "ewallet"].includes(method) && yes(T("bayar.kode_unik", "Ya")) ? `<p class="muted small co__note">A unique code of Rp1–299 is added to the total so we can match your payment instantly.</p>` : ""}`}`;
   }
 
   let ppLoading = null;
@@ -335,28 +346,137 @@
     const meth = config().methods.find((x) => x.id === m) || { label: m };
     const d = new Date();
     const code = `LG-${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}-${Math.floor(1000 + Math.random() * 9000)}`;
+    // a small unique amount makes each manual payment easy to match to its order
+    const unique = ["qris", "bank", "ewallet"].includes(m) && yes(T("bayar.kode_unik", "Ya")) ? 1 + Math.floor(Math.random() * 299) : 0;
     return {
       code, at: d.toISOString(), method: m, methodLabel: meth.label,
       items: items.map((p) => ({ id: p.id, brand: p.brand, title: p.title, size: p.size, price: p.price, images: p.images, type: p.type, color: p.color })),
-      subtotal: t.sub, shipping: t.ship, total: t.total, zone: t.zone ? t.zone.name : "",
-      customer: profileOrSession(), note: root.dataset.note || "", paid: false,
+      subtotal: t.sub, shipping: t.ship, unique, total: t.total + unique, zone: t.zone ? t.zone.name : "",
+      customer: profileOrSession(), note: root.dataset.note || "", paid: false, status: "Menunggu pembayaran",
     };
   }
   function placeOrder() { finishOrder(buildOrder(method)); }
   function finishOrder(o) {
     order = o;
-    const orders = store.get("orders", []);
-    orders.push({ code: o.code, at: o.at, total: o.total, methodLabel: o.methodLabel, items: o.items.map((i) => i.id) });
-    store.set("orders", orders.slice(-30));
+    if (o.paid) o.status = "Lunas";
     const c = o.customer || {};
+    const orders = store.get("orders", []);
+    orders.push({ code: o.code, at: o.at, total: o.total, methodLabel: o.methodLabel, items: o.items.map((i) => i.id), email: c.email || "", status: o.status });
+    store.set("orders", orders.slice(-30));
     send("order", {
-      code: o.code, status: o.paid ? "Dibayar (PayPal)" : "Menunggu pembayaran", method: o.methodLabel, paypal_id: o.paypalId || "",
+      code: o.code, paid: !!o.paid, method: o.methodLabel, paypal_id: o.paypalId || "",
       items: o.items.map((i) => `#${i.id} ${i.brand} ${i.title} (${i.size}) ${rp(i.price)}`).join("\n"),
-      subtotal: o.subtotal, shipping: o.shipping == null ? "" : o.shipping, total: o.total, zone: o.zone,
+      subtotal: o.subtotal, shipping: o.shipping == null ? "" : o.shipping, unique: o.unique || 0, total: o.total, zone: o.zone,
       name: c.name || "", phone: c.phone || "", email: c.email || "", address: `${c.address || ""}, ${c.city || ""} ${c.postal || ""}`.trim(), note: o.note,
+      pay_text: payText(o), shop: { name: "Lemari Gathan", whatsapp: (window.STORE || {}).whatsapp || "" },
     });
     window.LG && window.LG.clearBag();
     step = 3; render();
+  }
+
+  /* ---------- QRIS with the amount filled in ---------- */
+  function dynamicQR(amount) {
+    const payload = String(T("bayar.qris_payload", "") || "").trim();
+    if (!payload || !window.QRIS || typeof window.qrcode !== "function") return "";
+    try {
+      const text = window.QRIS.toDynamic(payload, amount);
+      const qr = window.qrcode(0, "M");
+      qr.addData(text, "Byte");
+      qr.make();
+      const n = qr.getModuleCount(), q = 4, size = n + q * 2;
+      let path = "";
+      for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) path += `M${c + q} ${r + q}h1v1h-1z`;
+      return `<svg class="co__qrsvg" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges" role="img" aria-label="QRIS code for ${rp(amount)}"><rect width="${size}" height="${size}" fill="#fff" stroke="none"/><path d="${path}" fill="#000" stroke="none"/></svg>`;
+    } catch (err) {
+      console.warn("[Lemari Gathan] QRIS:", err.message);
+      return "";
+    }
+  }
+  // merchant name as encoded in the QR itself (what the customer's app will show)
+  function qrisMerchant() {
+    try { return window.QRIS.info(String(T("bayar.qris_payload", "")).trim()).merchant || T("bayar.qris_nama", "Lemari Gathan"); }
+    catch { return T("bayar.qris_nama", "Lemari Gathan"); }
+  }
+  function saveQR() {
+    const svg = $(".co__qrsvg");
+    if (!svg) return;
+    const size = 900, pad = 60, img = new Image();
+    img.onload = () => {
+      const cv = document.createElement("canvas");
+      cv.width = size; cv.height = size + 150;
+      const g = cv.getContext("2d");
+      g.fillStyle = "#fff"; g.fillRect(0, 0, cv.width, cv.height);
+      g.imageSmoothingEnabled = false;
+      g.drawImage(img, pad, pad, size - pad * 2, size - pad * 2);
+      g.fillStyle = "#111"; g.textAlign = "center";
+      g.font = "bold 44px Arial"; g.fillText(rp(order.total), size / 2, size + 30);
+      g.font = "28px Arial"; g.fillText(`${qrisMerchant()} · ${order.code}`, size / 2, size + 80);
+      const a = document.createElement("a");
+      a.download = `QRIS-${order.code}.png`;
+      a.href = cv.toDataURL("image/png");
+      a.click();
+    };
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(svg));
+  }
+  function payText(o) {
+    const meth = config().methods.find((m) => m.id === o.method) || {};
+    if (o.method === "qris") return `Scan QRIS ${qrisMerchant()} di halaman pesanan (nominal sudah terisi otomatis): ${rp(o.total)}.`;
+    if (meth.accounts) return meth.accounts.map((a) => `${a.name}: ${a.number}${a.holder ? " a.n. " + a.holder : ""}`).join("\n");
+    if (o.method === "paypal") return "Dibayar lewat PayPal.";
+    return "Kami akan mengirim detail pembayaran lewat WhatsApp.";
+  }
+
+  /* ---------- live order status (needs the Apps Script inbox) ---------- */
+  const webhook = () => { const u = String(T("pesanan.webhook", "") || "").trim(); return /^https:\/\/script\.google(usercontent)?\.com\//.test(u) ? u : ""; };
+  const STATUS_TEXT = {
+    "Menunggu pembayaran": ["wait", "Waiting for payment confirmation", "We'll email you the moment your payment is confirmed."],
+    "Lunas": ["ok", "Payment received", "A confirmation email is on its way. We're packing your order."],
+    "Dikirim": ["ship", "Shipped", "Your order is on its way."],
+    "Selesai": ["ok", "Completed", "Thanks for shopping with us!"],
+    "Dibatalkan": ["off", "Cancelled", "This order was cancelled. Message us if that's unexpected."],
+  };
+  function statusLine(o) {
+    if (o.method === "wa") return "";
+    const st = STATUS_TEXT[o.status] || STATUS_TEXT["Menunggu pembayaran"];
+    const email = (o.customer || {}).email;
+    return `<div class="co__status co__status--${st[0]}" id="coStatus" aria-live="polite">
+      <span class="co__pulse"></span><div><strong>${esc(st[1])}</strong><small>${esc(st[2])}${email && st[0] === "wait" && webhook() ? ` (${esc(email)})` : ""}${o.resi ? ` Tracking: ${esc(o.resi)}` : ""}</small></div></div>`;
+  }
+  let jsonpN = 0;
+  function lookup(code, email) {
+    const url = webhook();
+    if (!url || !code || !email) return Promise.resolve(null);
+    return new Promise((resolve) => {
+      const cb = "__lgOrder" + Date.now() + "_" + (++jsonpN);
+      const s = document.createElement("script");
+      const done = (v) => { clearTimeout(t); delete window[cb]; s.parentNode && s.parentNode.removeChild(s); resolve(v); };
+      const t = setTimeout(() => done(null), 12000);
+      window[cb] = (res) => done(res && res.ok ? res : null);
+      s.onerror = () => done(null);
+      s.src = `${url}?action=status&code=${encodeURIComponent(code)}&email=${encodeURIComponent(email)}&callback=${cb}&_=${Date.now()}`;
+      document.head.appendChild(s);
+    });
+  }
+  function rememberStatus(code, status, resi) {
+    const orders = store.get("orders", []);
+    const o = orders.find((x) => x.code === code);
+    if (o && (o.status !== status || o.resi !== resi)) { o.status = status; o.resi = resi; store.set("orders", orders); }
+  }
+  let pollTimer = null;
+  function pollStatus() {
+    clearTimeout(pollTimer);
+    if (!order || step !== 3 || order.method === "wa" || !webhook() || !root.classList.contains("is-open")) return;
+    const before = order.status;
+    lookup(order.code, (order.customer || {}).email).then((res) => {
+      if (res && res.status && res.status !== before) {
+        order.status = res.status; order.resi = res.resi;
+        rememberStatus(order.code, res.status, res.resi);
+        const el = $("#coStatus");
+        if (el) { el.outerHTML = statusLine(order); }
+        if (res.status === "Lunas" && window.LG) window.LG.toast("Payment received — check your email!");
+      }
+      if (order && !["Selesai", "Dibatalkan", "Dikirim"].includes(order.status)) pollTimer = setTimeout(pollStatus, 15000);
+    });
   }
 
   /* ---------- step 3: done ---------- */
@@ -385,11 +505,18 @@
     const copyBtn = (txt) => `<button class="co__copy" data-copy="${esc(txt)}" aria-label="Copy">${ICONS.copy}</button>`;
     let how = "";
     if (o.method === "qris") {
+      const dyn = dynamicQR(o.total);
       how = `<div class="co__pay co__pay--qris">
-        <img src="${esc(imgLink(T("bayar.qris")))}" alt="QRIS code for ${esc(T("bayar.qris_nama", "Lemari Gathan"))}" />
+        <div class="co__qr">
+          ${dyn ? `<div class="co__qrcard"><div class="co__qrhead"><b>QRIS</b><span>${esc(qrisMerchant())}</span></div>${dyn}<div class="co__qrfoot">${rp(o.total)}</div></div>`
+                : `<img src="${esc(imgLink(T("bayar.qris")))}" alt="QRIS code for ${esc(T("bayar.qris_nama", "Lemari Gathan"))}" />`}
+          ${dyn ? `<button class="link" data-co-saveqr>Save QR image</button>` : ""}
+        </div>
         <div><small>Pay exactly</small><strong class="co__amount">${rp(o.total)} ${copyBtn(String(o.total))}</strong>
-          <p>Scan this QRIS with any banking or e-wallet app (BCA, Mandiri, GoPay, OVO, DANA, ShopeePay…) and enter the amount above.</p>
-          <p class="muted small">Merchant: ${esc(T("bayar.qris_nama", "Lemari Gathan"))}</p></div></div>`;
+          <p>${dyn ? "Scan with any banking or e-wallet app (GoPay, OVO, DANA, ShopeePay, BCA, Mandiri…). <b>The amount is filled in automatically</b> — just confirm." : "Scan this QRIS with any banking or e-wallet app (BCA, Mandiri, GoPay, OVO, DANA, ShopeePay…) and enter the amount above."}</p>
+          <p class="muted small">On your phone? Save the QR image, then open it from your e-wallet's "scan from gallery".</p>
+          ${dyn ? `<details class="co__alt"><summary>Use the original QR instead</summary><img src="${esc(imgLink(T("bayar.qris")))}" alt="Original QRIS" loading="lazy" /><p class="muted small">With this one, type the amount yourself.</p></details>` : ""}
+        </div></div>`;
     } else if (o.method === "bank" || o.method === "ewallet") {
       how = `<div class="co__pay"><small>Transfer exactly</small><strong class="co__amount">${rp(o.total)} ${copyBtn(String(o.total))}</strong>
         <div class="co__accts">${(meth.accounts || []).map((a) => `
@@ -405,6 +532,7 @@
         <h3>${esc(T("checkout.sukses_judul", "Order {kode} placed!").replace("{kode}", o.code))}</h3>
         <p class="muted">${esc(o.paid ? "Thank you! Your payment went through." : T("checkout.sukses_teks", ""))}</p>
         ${how}
+        ${statusLine(o)}
         <div class="co__actions co__actions--stack">
           <a class="btn btn--dark btn--block" href="${wa}" target="_blank" rel="noopener">${ICONS.chat} ${o.method === "wa" ? "Send order on WhatsApp" : o.paid ? "Message us on WhatsApp" : "Send payment proof on WhatsApp"}</a>
           <button class="btn btn--ghost btn--block" data-co-close>Back to the shop</button>

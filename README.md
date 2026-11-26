@@ -67,7 +67,11 @@ Checkout (`js/checkout.js`) has three steps:
 
 QRIS, transfers and e-wallets are checked by hand: ship once the money arrives, then mark the item Terjual. PayPal payments are captured on the spot.
 
-**Saving sign-ups and orders (optional):** follow `tools/orders-apps-script.gs` to create a *private* Google Sheet with a small Apps Script web app, then paste its URL in `pesanan.webhook`. Every sign-up and order is added to it as a row, with an optional email alert. Never collect customer data in the public backend sheet.
+**QRIS with the amount filled in:** `js/qris.js` turns the static GoPay Merchant QRIS (its text is the built-in default for `bayar.qris_payload`) into a dynamic QRIS per order: tag 01 becomes `12`, tag 54 holds the amount, and the CRC16 is recomputed. The QR is drawn with `js/vendor/qrcode-generator.js` (MIT). Customers scan it and the amount is already filled in, and the original image (`assets/img/qris-gopay.jpg`) stays available as a fallback. A unique code of Rp1–299 is added to QRIS, transfer and e-wallet totals so each payment can be matched to its order (`bayar.kode_unik`, Ya/Tidak).
+
+**Payment-confirmed emails:** a static QRIS doesn't notify the website, so the owner confirms payments. Set the order's Status to **Lunas** in the private orders sheet and the Apps Script emails the customer "Pembayaran berhasil" within seconds. The order page on the website switches to "Payment received" too, because it polls the script every 15 s. Setting the Status to **Dikirim** sends a shipping email with the No. Resi. PayPal orders get the success email straight away. Fully automatic QRIS detection would need a payment gateway such as Midtrans or Xendit.
+
+**Saving sign-ups and orders (needed for the emails):** follow `tools/orders-apps-script.gs` to create a *private* Google Sheet with a small Apps Script web app, then paste its URL in `pesanan.webhook`. Every sign-up and order is added to it as a row, with an optional email alert. Never collect customer data in the public backend sheet.
 
 Accounts live on the customer's device; there are no passwords or server-side logins. Real logins would need an auth service such as Firebase or Supabase.
 

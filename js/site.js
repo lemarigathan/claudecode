@@ -164,6 +164,8 @@
     // ---- Pembayaran & ongkir ----
     ["bayar.qris", "Pembayaran & ongkir", "QRIS: link gambar QR", "js", "Link gambar QRIS statis dari bank/e-wallet kamu (Google Drive boleh). Kosong = QRIS tidak tampil."],
     ["bayar.qris_nama", "Pembayaran & ongkir", "QRIS: nama merchant", "js", "Nama yang muncul saat pembeli scan."],
+    ["bayar.qris_payload", "Pembayaran & ongkir", "QRIS: isi kode (untuk nominal otomatis)", "js", "Teks di dalam QR (diawali 000201). Kalau diisi, pembeli scan QR yang nominalnya sudah terisi otomatis. Kosong = pakai gambar QR biasa."],
+    ["bayar.kode_unik", "Pembayaran & ongkir", "Tambah kode unik?", "js", "Ya / Tidak. Menambah Rp1–299 ke total QRIS/transfer supaya tiap pembayaran mudah dicocokkan dengan pesanannya."],
     ["bayar.bank", "Pembayaran & ongkir", "Transfer bank", "js", "Satu rekening per baris: Bank | Nomor | Atas nama. Kosong = tidak tampil."],
     ["bayar.ewallet", "Pembayaran & ongkir", "E-wallet", "js", "Satu per baris: DANA / OVO / GoPay / ShopeePay | Nomor | Atas nama. Kosong = tidak tampil."],
     ["bayar.paypal_id", "Pembayaran & ongkir", "PayPal: Client ID", "js", "Dari developer.paypal.com → Apps & Credentials (Live). Kosong = PayPal tidak tampil."],
@@ -231,8 +233,10 @@
     "ui.similar": "You might also like",
     "ui.pesan_beli": "Hi Lemari Gathan! I want to buy:\n{produk}\n\nIs it still available?",
     "ui.pesan_checkout": "Hi Lemari Gathan! I'd like to order:",
-    "bayar.qris": "",
-    "bayar.qris_nama": "Lemari Gathan",
+    "bayar.qris": "assets/img/qris-gopay.jpg",
+    "bayar.qris_nama": "GATHAN KIEVLAN KHELKAL RA",
+    "bayar.qris_payload": "00020101021126610014COM.GO-JEK.WWW01189360091438780668910210G8780668910303UMI51440014ID.CO.QRIS.WWW0215ID10264831574870303UMI5204569753033605802ID5925GATHAN KIEVLAN KHELKAL RA6005MEDAN61052012762070703A01630426A1",
+    "bayar.kode_unik": "Ya",
     "bayar.bank": "",
     "bayar.ewallet": "",
     "bayar.paypal_id": "",
@@ -281,7 +285,11 @@
   function applyField([key, , , type], v) {
     if (type === "js") return;
     if (type === "title") { document.title = v; $$('meta[property="og:title"]').forEach((m) => m.setAttribute("content", v)); return; }
-    if (type.startsWith("store:")) { window.STORE[type.slice(6)] = type === "store:whatsapp" ? v.replace(/[^\d]/g, "") : v.replace(/^@/, ""); return; }
+    if (type.startsWith("store:")) {
+      // WhatsApp links need the country code: 0812… / +62 812… -> 62812…
+      window.STORE[type.slice(6)] = type === "store:whatsapp" ? v.replace(/[^\d]/g, "").replace(/^0/, "62") : v.replace(/^@/, "");
+      return;
+    }
     $$(`[data-cms~="${key}"]`).forEach((el) => {
       if (type === "show") { if (!yes(v)) el.hidden = true, el.dataset.off = "1"; return; }
       if (type.startsWith("attr:")) return el.setAttribute(type.slice(5), v);
