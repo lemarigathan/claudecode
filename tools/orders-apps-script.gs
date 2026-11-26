@@ -34,6 +34,11 @@
 // Optional: your email, to get a copy of every new order.
 const NOTIFY_EMAIL = "";
 
+// The private orders spreadsheet. Leave "" when this script is opened from
+// that spreadsheet (Extensions → Apps Script); set an ID for a standalone script.
+const SHEET_ID = "1lMq4z1fwcI-GcG3JnSkttXoJphczDxRuQ4lGgXV7Jfw";
+function book_() { return SHEET_ID ? SpreadsheetApp.openById(SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet(); }
+
 const STATUS = ["Menunggu pembayaran", "Lunas", "Dikirim", "Selesai", "Dibatalkan"];
 const ORDER_COLS = ["Waktu", "Kode", "Status", "Metode", "PayPal ID", "Produk", "Subtotal", "Ongkir", "Kode unik", "Total",
   "Zona", "Nama", "WhatsApp", "Email", "Alamat", "Catatan", "No. Resi", "Email terkirim", "Data"];
@@ -41,7 +46,7 @@ const CUSTOMER_COLS = ["Waktu", "Nama", "WhatsApp", "Email", "Alamat", "Kota", "
 
 /* ---------------- setup (run once) ---------------- */
 function setup() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = book_();
   const orders = tab_(ss, "Pesanan", ORDER_COLS);
   tab_(ss, "Pelanggan", CUSTOMER_COLS);
   const rule = SpreadsheetApp.newDataValidation().requireValueInList(STATUS, true).setAllowInvalid(false).build();
@@ -50,7 +55,7 @@ function setup() {
   ScriptApp.getProjectTriggers().forEach((t) => { if (t.getHandlerFunction() === "onStatusEdit") ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger("onStatusEdit").forSpreadsheet(ss).onEdit().create();
   MailApp.getRemainingDailyQuota(); // asks for the email permission now
-  SpreadsheetApp.getUi && ss.toast("Siap! Lanjut ke Deploy → New deployment → Web app.", "Lemari Gathan", 8);
+  Logger.log("Siap! Lanjut ke Deploy → New deployment → Web app.");
 }
 
 /* ---------------- website → sheet ---------------- */
@@ -59,7 +64,7 @@ function doPost(e) {
   lock.tryLock(10000);
   try {
     const d = JSON.parse((e && e.postData && e.postData.contents) || "{}");
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = book_();
     const c = clean_(d);
     if (d.type === "signup") {
       tab_(ss, "Pelanggan", CUSTOMER_COLS).appendRow([new Date(), c.name, c.phone, c.email, c.address, c.city, c.postal, c.zone, c.news]);
@@ -92,7 +97,7 @@ function doGet(e) {
   let res = { ok: true, message: "Lemari Gathan order inbox is running." };
   if (p.action === "status") {
     res = { ok: false, status: null };
-    const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Pesanan");
+    const sh = book_().getSheetByName("Pesanan");
     const row = sh && findRow_(sh, String(p.code || ""));
     if (row) {
       const v = sh.getRange(row, 1, 1, ORDER_COLS.length).getValues()[0];
