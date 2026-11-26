@@ -15,17 +15,22 @@
  * Merchant / bank app, then change the Status cell to "Lunas" (works from the
  * Google Sheets phone app). The email goes out within seconds.
  *
- * SETUP (about 5 minutes)
- *  1. Create a NEW Google Sheet (sheets.new). Do NOT share it publicly —
- *     it holds customers' names, phone numbers and addresses.
- *  2. Extensions → Apps Script. Delete everything there, paste this whole file, click Save.
+ * ONE BACKEND: products, settings, orders and customers all live in the
+ * "Backend Website" spreadsheet (SHEET_ID below). The website reads products and
+ * settings THROUGH this script (action=data), never the sheet directly, so the
+ * spreadsheet can be set to Restricted and customer data stays private.
+ *
+ * SETUP (about 2 minutes)
+ *  1. Go to script.new (a new Apps Script project).
+ *  2. Delete everything there, paste this whole file, click Save.
  *  3. In the toolbar choose the function "setup" and click Run. Allow the permissions
  *     (Google will warn the app is unverified: Advanced → Go to project → Allow).
  *     This creates the tabs, the Status dropdown and the email trigger.
  *  4. Deploy → New deployment → gear icon → "Web app".
  *       Execute as: Me        Who has access: Anyone
  *     Click Deploy and copy the Web app URL (https://script.google.com/macros/s/…/exec).
- *  5. Paste that URL in the backend sheet → tab Pengaturan → row "pesanan.webhook" → column Isi.
+ *  5. Give that URL to the website (STORE.backend in js/products.js), then set the
+ *     spreadsheet to Share → General access → Restricted.
  *
  * After changing this code later: Deploy → Manage deployments → edit (pencil) →
  * Version: New version → Deploy (the URL stays the same).
@@ -36,7 +41,7 @@ const NOTIFY_EMAIL = "";
 
 // The private orders spreadsheet. Leave "" when this script is opened from
 // that spreadsheet (Extensions → Apps Script); set an ID for a standalone script.
-const SHEET_ID = "1lMq4z1fwcI-GcG3JnSkttXoJphczDxRuQ4lGgXV7Jfw";
+const SHEET_ID = "11Ns5KVB9JCxQLMhnB7zbBVUlfhN630icbRNNcDkDpFs"; // Lemari Gathan — Backend Website
 function book_() { return SHEET_ID ? SpreadsheetApp.openById(SHEET_ID) : SpreadsheetApp.getActiveSpreadsheet(); }
 
 const STATUS = ["Menunggu pembayaran", "Lunas", "Dikirim", "Selesai", "Dibatalkan"];
@@ -95,7 +100,11 @@ function doPost(e) {
 function doGet(e) {
   const p = (e && e.parameter) || {};
   let res = { ok: true, message: "Lemari Gathan order inbox is running." };
-  if (p.action === "status") {
+  if (p.action === "data") {
+    // Products + site settings for the website. Only these two tabs are ever
+    // returned, so the spreadsheet itself can stay private (Restricted).
+    res = siteData_();
+  } else if (p.action === "status") {
     res = { ok: false, status: null };
     const sh = book_().getSheetByName("Pesanan");
     const row = sh && findRow_(sh, String(p.code || ""));
@@ -112,6 +121,26 @@ function doGet(e) {
     return ContentService.createTextOutput(`${cb}(${JSON.stringify(res)});`).setMimeType(ContentService.MimeType.JAVASCRIPT);
   }
   return json_(res);
+}
+
+/* ---------------- website data (Produk + Pengaturan) ---------------- */
+const PUBLIC_TABS = ["Produk", "Pengaturan"];
+function siteData_() {
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get("siteData");
+  if (hit) return JSON.parse(hit);
+  const ss = book_();
+  const produk = ss.getSheetByName("Produk") || ss.getSheets()[0];
+  const out = { ok: true, at: new Date().toISOString(), produk: rows_(produk), pengaturan: rows_(ss.getSheetByName("Pengaturan")) };
+  try { cache.put("siteData", JSON.stringify(out), 30); } catch (err) {} // 30 s: edits show up quickly
+  return out;
+}
+// formatted cell values (what you see in the sheet), without trailing empty rows
+function rows_(sh) {
+  if (!sh || sh.getLastRow() < 1) return [];
+  const v = sh.getRange(1, 1, sh.getLastRow(), sh.getLastColumn()).getDisplayValues();
+  while (v.length > 1 && v[v.length - 1].every((x) => x === "")) v.pop();
+  return v;
 }
 
 /* ---------------- you change the Status → customer gets an email ---------------- */

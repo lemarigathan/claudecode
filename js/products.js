@@ -30,6 +30,11 @@ window.STORE = {
   // Leave empty ("") to use the PRODUCTS list below instead.
   // Example: "https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?gid=0&single=true&output=csv"
   sheetCSV: "https://docs.google.com/spreadsheets/d/11Ns5KVB9JCxQLMhnB7zbBVUlfhN630icbRNNcDkDpFs/edit",
+
+  // Apps Script web app (tools/orders-apps-script.gs). When set, the website reads
+  // products + settings through it and sends orders to it, so the spreadsheet can
+  // be Restricted (private). sheetCSV above is only a fallback.
+  backend: "",
 };
 
 window.PRODUCTS = [

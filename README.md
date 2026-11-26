@@ -71,6 +71,8 @@ QRIS, transfers and e-wallets are checked by hand: ship once the money arrives, 
 
 **Payment-confirmed emails:** a static QRIS doesn't notify the website, so the owner confirms payments. Set the order's Status to **Lunas** in the private orders sheet and the Apps Script emails the customer "Pembayaran berhasil" within seconds. The order page on the website switches to "Payment received" too, because it polls the script every 15 s. Setting the Status to **Dikirim** sends a shipping email with the No. Resi. PayPal orders get the success email straight away. Fully automatic QRIS detection would need a payment gateway such as Midtrans or Xendit.
 
+**One backend:** products, settings, orders and customers all live in the one "Backend Website" spreadsheet. Once the Apps Script is deployed and its URL is set as `STORE.backend` in `js/products.js`, the website reads Produk and Pengaturan *through the script* (`?action=data`, cached for 30 s) and sends sign-ups and orders to it. The spreadsheet can then be set to **Restricted**, so customer data is never publicly readable. `sheetCSV` stays as a fallback.
+
 **Saving sign-ups and orders (needed for the emails):** follow `tools/orders-apps-script.gs` to create a *private* Google Sheet with a small Apps Script web app, then paste its URL in `pesanan.webhook`. Every sign-up and order is added to it as a row, with an optional email alert. Never collect customer data in the public backend sheet.
 
 Accounts live on the customer's device; there are no passwords or server-side logins. Real logins would need an auth service such as Firebase or Supabase.

@@ -337,7 +337,16 @@
   window.loadSite = async function () {
     const url = (window.STORE && window.STORE.sheetCSV || "").trim();
     let data = null, source = "file";
-    if (url && window.fetchSheetRows) {
+    if ((window.STORE || {}).backend && window.fetchBackend) {
+      try {
+        data = parse((await window.fetchBackend()).pengaturan);
+        source = "sheet";
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch {}
+      } catch (err) {
+        console.warn("[Lemari Gathan] Backend settings:", err.message);
+      }
+    }
+    if (!data && url && window.fetchSheetRows) {
       try {
         data = parse(await window.fetchSheetRows(url, TAB));
         source = "sheet";
