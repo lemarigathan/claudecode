@@ -14,7 +14,10 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/icon-32.png" />
   <link rel="apple-touch-icon" href="assets/icons/icon-180.png" />
   <link rel="manifest" href="site.webmanifest" />
-  <link rel="preload" as="image" href="assets/video/lot704-poster.jpg" />
+  <link rel="preload" as="image" href="assets/video/lot704-poster.webp" />
+  <!-- the shop's data comes from the Apps Script backend: open the connection early -->
+  <link rel="preconnect" href="https://script.google.com" />
+  <link rel="preconnect" href="https://script.googleusercontent.com" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -148,8 +151,8 @@
     <!-- Brand film -->
     <section class="film" id="film" data-cms="video.tampil" aria-label="Taiga Takahashi Lot 704 brand film">
       <video class="film__video" id="filmVideo" data-cms="video.hd video.hp video.poster" muted loop playsinline preload="metadata"
-        poster="assets/video/lot704-poster.jpg"
-        data-src-hd="assets/video/lot704-1080.mp4" data-src-sd="assets/video/lot704-720.mp4"
+        poster="assets/video/lot704-poster.webp"
+        data-src-hd="assets/video/lot704-1080.mp4" data-src-sd="assets/video/lot704-720.mp4" data-src-low="assets/video/lot704-480.mp4"
         aria-label="Brand film for Taiga Takahashi Lot 704 Broken Indigo denim"></video>
       <div class="film__ui">
         <p class="film__label" data-cms="video.label"><span class="dot dot--light"></span> Featured drop · Taiga Takahashi Lot 704</p>
@@ -422,9 +425,9 @@
       <div class="drawer__list" id="drawerList"></div>
       <div class="drawer__foot" id="drawerFoot">
         <div class="drawer__total"><span>Subtotal</span><strong id="bagTotal">Rp0</strong></div>
-        <p class="muted small" data-cms="ui.ship_note">Shipping is calculated in chat based on your city.</p>
-        <a class="btn btn--dark btn--block" id="checkoutBtn" data-cms="ui.checkout" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/></svg> Checkout via WhatsApp
+        <p class="muted small" data-cms="ui.ship_note">Shipping is added at checkout based on your province. Pay instantly with QRIS, transfer or PayPal.</p>
+        <a class="btn btn--dark btn--block" id="checkoutBtn" data-cms="ui.checkout" href="#checkout">
+          <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Checkout
         </a>
       </div>
     </aside>
@@ -433,11 +436,10 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="js/products.js?v=dev"></script>
+  <script src="js/snapshot.js?v=dev"></script>
   <script src="js/sheet.js?v=dev"></script>
   <script src="js/site.js?v=dev"></script>
   <script src="js/app.js?v=dev"></script>
-  <script src="js/vendor/qrcode-generator.js?v=dev" defer></script>
-  <script src="js/qris.js?v=dev" defer></script>
   <script src="js/checkout.js?v=dev" defer></script>
 </body>
 </html>

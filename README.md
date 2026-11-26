@@ -77,6 +77,15 @@ QRIS, transfers and e-wallets are checked by hand: ship once the money arrives, 
 
 Accounts live on the customer's device; there are no passwords or server-side logins. Real logins would need an auth service such as Firebase or Supabase.
 
+## Speed
+- Products and settings come from the Apps Script backend (1–3 s, and slower on its first call). To hide that wait, the site shows the copy saved on the visitor's device after 0.9 s and swaps in fresh data as soon as it arrives. First-time visitors get a copy built into the site on every deploy and every hour (`js/snapshot.js`, written by the workflow).
+- The intro waits for the data only, not for images or the video. Returning visitors get a shorter intro.
+- The hero video starts downloading only after the page is shown: 720p (3.6 MB) by default, 1080p (7.4 MB) on large screens, 480p (1.6 MB) on data-saver or slow connections.
+- The QR libraries load only when checkout opens.
+
+## Shipping
+`ongkir.provinsi`: one line per province, `Island | Province | cost`. All 38 provinces are built in, as estimates from Medan; North Sumatra is split into Kota Medan (free) and outside Medan. To change them, add a row with key `ongkir.provinsi` to the Pengaturan tab.
+
 ## Hero video
 The brand film at the top of the page lives in `assets/video/`. Desktop gets `lot704-1080.mp4`, phones and data-saver users get `lot704-720.mp4`, and `lot704-poster.jpg` shows while it loads. It plays muted and on a loop, pauses when scrolled off screen, and doesn't autoplay for visitors who've turned on reduced motion. The **Shop Lot 704** button links to the inventory item whose name contains "Lot 704", and is hidden if that item is missing or sold.
 

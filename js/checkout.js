@@ -30,7 +30,9 @@
 
   /* ---------- config from the sheet ---------- */
   function config() {
-    const zones = lines(T("ongkir.zona")).map((l) => { const [name, cost] = cols(l); return { name, cost: parseInt(String(cost || "").replace(/[^\d]/g, ""), 10) || 0 }; }).filter((z) => z.name);
+    const money = (v) => parseInt(String(v || "").replace(/[^\d]/g, ""), 10) || 0;
+    let zones = lines(T("ongkir.provinsi")).map((l) => { const c = cols(l); return c.length >= 3 ? { group: c[0], name: c[1], cost: money(c[2]) } : { group: "", name: c[0], cost: money(c[1]) }; }).filter((z) => z.name);
+    if (!zones.length) zones = lines(T("ongkir.zona")).map((l) => { const [name, cost] = cols(l); return { group: "", name, cost: money(cost) }; }).filter((z) => z.name);
     const accounts = (key) => lines(T(key)).map((l) => { const [name, number, holder] = cols(l); return { name, number, holder }; }).filter((a) => a.name && a.number);
     const methods = [];
     if (T("bayar.qris")) methods.push({ id: "qris", label: "QRIS", sub: "Scan with any bank or e-wallet app", icon: "qr" });
@@ -38,7 +40,7 @@
     if (banks.length) methods.push({ id: "bank", label: "Bank transfer", sub: banks.map((b) => b.name).join(" · "), icon: "bank", accounts: banks });
     if (wallets.length) methods.push({ id: "ewallet", label: "E-wallet", sub: wallets.map((b) => b.name).join(" · "), icon: "wallet", accounts: wallets });
     if (T("bayar.paypal_id")) methods.push({ id: "paypal", label: "PayPal", sub: "Card or PayPal balance (charged in USD)", icon: "paypal" });
-    if (yes(T("bayar.wa", "Ya")) || !methods.length) methods.push({ id: "wa", label: "Pay via WhatsApp chat", sub: "We'll confirm stock & send payment details", icon: "chat" });
+    if (!methods.length) methods.push({ id: "wa", label: "Pay via WhatsApp chat", sub: "We'll confirm stock & send payment details", icon: "chat" });
     return { zones, methods, rate: parseFloat(String(T("bayar.paypal_kurs", "16000")).replace(/[^\d.]/g, "")) || 16000 };
   }
 
@@ -91,8 +93,19 @@
     Promise.all(orders.map((o) => lookup(o.code, o.email).then((res) => res && res.status && rememberStatus(o.code, res.status, res.resi))))
       .then(() => { if (mode === "account" && root.classList.contains("is-open")) renderSummary(); });
   }
+  let qrLibs = null;
+  function ensureQR() {
+    if (window.qrcode && window.QRIS) return Promise.resolve();
+    if (qrLibs) return qrLibs;
+    const v = (document.querySelector('script[src*="js/checkout.js"]') || {}).src || "";
+    const ver = (v.match(/\?v=[\w]+/) || [""])[0];
+    const load = (src) => new Promise((res, rej) => { const s = document.createElement("script"); s.src = src + ver; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+    qrLibs = Promise.all([load("js/vendor/qrcode-generator.js"), load("js/qris.js")]).catch((err) => { qrLibs = null; throw err; });
+    return qrLibs;
+  }
   function open(m) {
     mode = m;
+    if (m === "checkout") ensureQR().catch(() => {});
     if (m === "account") setTimeout(refreshOrderStatuses, 300);
     items = window.LG ? window.LG.bagItems() : [];
     if (mode === "checkout" && !items.length) { window.LG && window.LG.toast("Your bag is empty"); return; }
@@ -176,9 +189,9 @@
           <label class="fld fld--wide"><span>Address *</span><textarea name="address" rows="2" autocomplete="street-address" required placeholder="Street, house number, district">${v("address")}</textarea></label>
           <label class="fld"><span>City *</span><input name="city" autocomplete="address-level2" required value="${v("city")}" /></label>
           <label class="fld"><span>Postal code</span><input name="postal" inputmode="numeric" autocomplete="postal-code" value="${v("postal")}" /></label>
-          ${zones.length ? `<label class="fld fld--wide"><span>Shipping zone *</span><select name="zone" required>
-            <option value="">Choose your area…</option>
-            ${zones.map((z) => `<option value="${esc(z.name)}"${pr && pr.zone === z.name ? " selected" : ""}>${esc(z.name)} — ${z.cost ? rp(z.cost) : "Free"}</option>`).join("")}
+          ${zones.length ? `<label class="fld fld--wide"><span>Province (shipping) *</span><select name="zone" required>
+            <option value="">Choose your province…</option>
+            ${zoneOptions(zones, pr && pr.zone)}
           </select></label>` : ""}
           ${isAccount ? "" : `<label class="fld fld--wide"><span>Order note</span><input name="note" placeholder="Optional" /></label>`}
         </div>
@@ -191,8 +204,16 @@
         </div>
       </form>`;
   }
+  function zoneOptions(zones, current) {
+    const opt = (z) => `<option value="${esc(z.name)}"${current === z.name ? " selected" : ""}>${esc(z.name)} — ${z.cost ? rp(z.cost) : "Free"}</option>`;
+    const groups = [...new Set(zones.map((z) => z.group))];
+    if (groups.length === 1 && !groups[0]) return zones.map(opt).join("");
+    return groups.map((g) => `<optgroup label="${esc(g || "Other")}">${zones.filter((z) => z.group === g).map(opt).join("")}</optgroup>`).join("");
+  }
   function detailsView() {
     const pr = profileOrSession();
+    const zonesNow = config().zones;
+    if (pr && zonesNow.length && !zonesNow.some((z) => z.name === pr.zone)) root.dataset.editing = "1";
     if (pr && !root.dataset.editing) {
       return `
         <div class="co__me">
@@ -355,7 +376,11 @@
       customer: profileOrSession(), note: root.dataset.note || "", paid: false, status: "Menunggu pembayaran",
     };
   }
-  function placeOrder() { finishOrder(buildOrder(method)); }
+  function placeOrder() {
+    const o = buildOrder(method);
+    if (method === "qris") ensureQR().catch(() => {}).then(() => finishOrder(o)); // QR drawn with the amount
+    else finishOrder(o);
+  }
   function finishOrder(o) {
     order = o;
     if (o.paid) o.status = "Lunas";
@@ -534,8 +559,8 @@
         ${how}
         ${statusLine(o)}
         <div class="co__actions co__actions--stack">
-          <a class="btn btn--dark btn--block" href="${wa}" target="_blank" rel="noopener">${ICONS.chat} ${o.method === "wa" ? "Send order on WhatsApp" : o.paid ? "Message us on WhatsApp" : "Send payment proof on WhatsApp"}</a>
-          <button class="btn btn--ghost btn--block" data-co-close>Back to the shop</button>
+          ${o.method === "wa" ? `<a class="btn btn--dark btn--block" href="${wa}" target="_blank" rel="noopener">${ICONS.chat} Send order on WhatsApp</a>` : ""}
+          <button class="btn ${o.method === "wa" ? "btn--ghost" : "btn--dark"} btn--block" data-co-close>Back to the shop</button>
         </div>
       </div>`;
   }

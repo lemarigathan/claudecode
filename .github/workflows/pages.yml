@@ -4,6 +4,9 @@ on:
   push:
     branches: ["claude/wonderful-franklin-0xqmq8", "main"]
   workflow_dispatch:
+  # refresh the built-in copy of the shop data every hour
+  schedule:
+    - cron: "23 * * * *"
 
 permissions:
   contents: write
@@ -28,6 +31,18 @@ jobs:
           mkdir -p /tmp/site
           cp -r index.html favicon.ico site.webmanifest css js assets /tmp/site/
           touch /tmp/site/.nojekyll
+
+      # A copy of the public shop data (Produk + Pengaturan only) so first-time
+      # visitors see the shop instantly; the live data still loads right after.
+      - name: Snapshot shop data
+        run: |
+          URL=$(grep -oE 'https://script\.google\.com/macros/s/[A-Za-z0-9_-]+/exec' js/products.js | head -1)
+          if [ -n "$URL" ] && curl -sSL --max-time 60 "$URL?action=data" -o /tmp/data.json && python3 -c "import json,sys; d=json.load(open('/tmp/data.json')); sys.exit(0 if d.get('ok') and d.get('produk') else 1)"; then
+            python3 -c "import json; d=json.load(open('/tmp/data.json')); open('/tmp/site/js/snapshot.js','w').write('window.__LG_SNAPSHOT=' + json.dumps({'at': d.get('at'), 'produk': d['produk'], 'pengaturan': d.get('pengaturan', [])}, ensure_ascii=False, separators=(',', ':')) + ';')"
+            echo "snapshot: $(wc -c < /tmp/site/js/snapshot.js) bytes"
+          else
+            echo "snapshot skipped (backend unreachable)"
+          fi
           # cache-bust: make browsers load the new CSS/JS after each deploy
           sed -i "s/?v=dev/?v=${GITHUB_SHA::7}/g" /tmp/site/index.html
 
